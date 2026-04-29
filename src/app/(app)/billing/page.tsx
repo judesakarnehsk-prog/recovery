@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { CreditCard, ArrowUpRight, CheckCircle2, AlertTriangle, X, Loader2 } from 'lucide-react'
@@ -53,7 +53,7 @@ const planDetails: Record<string, { name: string; price: string; features: strin
   },
 }
 
-export default function BillingPage() {
+function BillingContent() {
   const searchParams = useSearchParams()
   const isExpired = searchParams.get('expired') === 'true'
   const isPastDue = searchParams.get('past_due') === 'true'
@@ -406,5 +406,13 @@ export default function BillingPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense>
+      <BillingContent />
+    </Suspense>
   )
 }
