@@ -1,7 +1,10 @@
 import { Resend } from 'resend'
 
+// Named export for direct use in recovery.ts etc.
+export const resend = new Resend(process.env.RESEND_API_KEY)
+
 function getResendClient() {
-  return new Resend(process.env.RESEND_API_KEY)
+  return resend
 }
 
 interface SendDunningEmailParams {

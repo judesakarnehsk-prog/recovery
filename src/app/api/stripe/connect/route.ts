@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createConnectedStripe } from '@/lib/stripe'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -43,6 +43,31 @@ export async function GET(request: NextRequest) {
     // Exchange authorization code for access token
     const tokenResponse = await createConnectedStripe(code)
 
+    // Load existing config (if any) so branding/tone settings are preserved on reconnect.
+    // On reconnect after a disconnect: clear pausedBy so the UI shows "reconnected — click Resume"
+    // but leave recoveryPaused=true so the user must opt back in explicitly.
+    const db = createServiceRoleClient()
+    const { data: existingAccount } = await db
+      .from('stripe_accounts')
+      .select('config_json')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    const existingConfig = existingAccount?.config_json || {}
+    const isReconnect = existingConfig.pausedBy === 'stripe_disconnect'
+
+    const mergedConfig = {
+      // Defaults for brand-new connections
+      dunningTone: 'professional',
+      maxRetries: 3,
+      retryIntervalDays: 3,
+      // Overlay any existing settings (preserves branding, tone, custom domain etc.)
+      ...existingConfig,
+      // On reconnect: clear pausedBy so banner switches to "reconnected" state,
+      // but keep recoveryPaused=true — user must click Resume to opt back in
+      ...(isReconnect ? { pausedBy: null } : {}),
+    }
+
     // Save the connected account details
     const { error: dbError } = await supabase
       .from('stripe_accounts')
@@ -51,11 +76,7 @@ export async function GET(request: NextRequest) {
         stripe_account_id: tokenResponse.stripe_user_id,
         access_token: tokenResponse.access_token,
         refresh_token: tokenResponse.refresh_token,
-        config_json: {
-          dunningTone: 'professional',
-          maxRetries: 3,
-          retryIntervalDays: 3,
-        },
+        config_json: mergedConfig,
       }, {
         onConflict: 'user_id',
       })

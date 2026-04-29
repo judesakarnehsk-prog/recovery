@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/admin'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const supabase = createServerSupabaseClient()

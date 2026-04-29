@@ -7,6 +7,14 @@ const checkoutSchema = z.object({
   priceId: z.string().min(1),
 })
 
+function getAllowedPriceIds(): string[] {
+  return [
+    process.env.STRIPE_STARTER_PRICE_ID,
+    process.env.STRIPE_GROWTH_PRICE_ID,
+    process.env.STRIPE_SCALE_PRICE_ID,
+  ].filter(Boolean) as string[]
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = createServerSupabaseClient()
@@ -19,6 +27,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { priceId } = checkoutSchema.parse(body)
 
+    // Security: only accept known price IDs — prevent arbitrary price manipulation
+    const allowedPriceIds = getAllowedPriceIds()
+    if (allowedPriceIds.length > 0 && !allowedPriceIds.includes(priceId)) {
+      return NextResponse.json({ error: 'Invalid price ID' }, { status: 400 })
+    }
+
     // Look up existing Stripe customer ID
     const { data: userData } = await supabase
       .from('users')
@@ -29,7 +43,8 @@ export async function POST(request: NextRequest) {
     const session = await createCheckoutSession(
       priceId,
       userData?.stripe_customer_id || '',
-      user.email || ''
+      user.email || '',
+      user.id
     )
 
     return NextResponse.json({ url: session.url })

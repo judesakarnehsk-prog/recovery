@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" rx="7" fill="#0f0e0c"/>
+  <!--
+    Single unified R path — no font dependency.
+    Stem + closed bowl + diagonal leg, all one shape.
+    Leg tip recolored orange via a separate overlay path.
+  -->
+  <path
+    d="M7,26 L7,6 L19,6 C22.866,6 26,8.686 26,12 C26,14.761 24.12,17.1 21.5,17.8 L26,26 L21.5,26 L17.5,18 L11,18 L11,26 Z M11,9.5 L11,14.5 L18.5,14.5 C20.433,14.5 22,13.381 22,12 C22,10.619 20.433,9.5 18.5,9.5 Z"
+    fill="white"
+  />
+  <!-- Orange overlay on the leg tip only -->
+  <path
+    d="M19.5,22 L21.5,26 L26,26 L23.5,22 Z"
+    fill="#C94A1F"
+  />
+  <!-- Orange dot -->
+  <circle cx="25.5" cy="25.5" r="2.2" fill="#C94A1F"/>
+</svg>

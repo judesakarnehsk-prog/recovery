@@ -64,7 +64,8 @@ export async function retryPaymentIntent(
 export async function createCheckoutSession(
   priceId: string,
   customerId: string,
-  customerEmail: string
+  customerEmail: string,
+  userId?: string
 ) {
   const s = getStripe()
   const session = await s.checkout.sessions.create({
@@ -74,7 +75,9 @@ export async function createCheckoutSession(
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
       trial_period_days: 14,
+      metadata: userId ? { userId } : undefined,
     },
+    metadata: userId ? { userId } : undefined,
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/thanks?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
     allow_promotion_codes: true,

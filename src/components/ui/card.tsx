@@ -1,38 +1,34 @@
-'use client'
-
 import { forwardRef, type HTMLAttributes } from 'react'
-import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  variant?: 'white' | 'cream' | 'ink'
   hover?: boolean
   glass?: boolean
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, hover = false, glass = false, children, ...props }, ref) => {
-    const Component = hover ? motion.div : 'div'
-    const motionProps = hover
-      ? {
-          whileHover: { y: -4, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
-        }
-      : {}
+  ({ className, variant = 'white', hover, glass, children, ...props }, ref) => {
+    const variants = {
+      white: 'bg-white border border-border',
+      cream: 'bg-cream border border-border',
+      ink: 'bg-ink text-white border border-ink',
+    }
 
     return (
-      <Component
+      <div
         ref={ref}
         className={cn(
-          'rounded-2xl border border-border bg-white p-6',
-          hover && 'cursor-pointer shadow-card hover:shadow-card-hover transition-shadow duration-300',
-          glass && 'glass',
-          'card-shine',
+          'rounded-2xl p-6 shadow-card',
+          variants[variant],
+          hover && 'transition-shadow hover:shadow-card-hover cursor-pointer',
+          glass && 'bg-white/70 backdrop-blur-xl',
           className
         )}
-        {...motionProps}
-        {...(props as any)}
+        {...props}
       >
         {children}
-      </Component>
+      </div>
     )
   }
 )
@@ -47,14 +43,14 @@ CardHeader.displayName = 'CardHeader'
 
 const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn('text-xl font-bold text-text-primary', className)} {...props} />
+    <h3 ref={ref} className={cn('text-lg font-semibold text-ink', className)} {...props} />
   )
 )
 CardTitle.displayName = 'CardTitle'
 
 const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLParagraphElement>>(
   ({ className, ...props }, ref) => (
-    <p ref={ref} className={cn('text-sm text-text-secondary', className)} {...props} />
+    <p ref={ref} className={cn('text-sm text-muted', className)} {...props} />
   )
 )
 CardDescription.displayName = 'CardDescription'

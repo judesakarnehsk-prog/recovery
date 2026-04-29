@@ -39,7 +39,7 @@ const plans = [
       'Smart personalized emails',
       'Payment update links',
       'Advanced analytics & reports',
-      'Custom email branding',
+      'Custom email branding & domain',
       'Webhook notifications',
       'Priority support',
     ],
