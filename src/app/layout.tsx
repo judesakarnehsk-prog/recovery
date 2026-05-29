@@ -28,11 +28,11 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://revorva.com'
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: 'Revorva – Recover Failed Payments Automatically',
+    default: 'Revorva — Recover Failed Stripe Payments Automatically',
     template: '%s | Revorva',
   },
   description:
-    'Stop losing revenue to failed payments. Revorva auto-retries charges, sends personalized dunning emails, and recovers your subscription revenue on autopilot.',
+    'Stop losing 4-9% of MRR to failed payments. Revorva connects to Stripe in 2 minutes and recovers up to 70% with AI dunning emails and smart retries.',
   keywords: [
     'payment recovery',
     'dunning',
@@ -45,9 +45,9 @@ export const metadata: Metadata = {
     'revenue recovery',
   ],
   openGraph: {
-    title: 'Revorva – Recover Failed Payments Automatically',
+    title: 'Revorva — Recover Failed Stripe Payments Automatically',
     description:
-      'Stop losing revenue to failed payments. Smart dunning that recovers subscription revenue on autopilot.',
+      'Stop losing 4-9% of MRR to failed payments. Revorva connects to Stripe in 2 minutes and recovers up to 70% with AI dunning emails and smart retries.',
     type: 'website',
     locale: 'en_US',
     siteName: 'Revorva',
@@ -55,8 +55,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Revorva – Recover Failed Payments Automatically',
-    description: 'Smart dunning that recovers subscription revenue on autopilot.',
+    title: 'Revorva — Recover Failed Stripe Payments Automatically',
+    description: 'Stop losing 4-9% of MRR to failed payments. Revorva recovers up to 70% of failed Stripe payments with AI dunning emails.',
   },
   robots: {
     index: true,

@@ -28,15 +28,20 @@ export function FinalCTA() {
               </em>
             </h2>
             <p className="text-white/60 max-w-md mx-auto mb-8 leading-relaxed">
-              Connect Stripe in 2 minutes and see exactly how much you've been losing — and how much Revorva can recover.
+              Every day without smart dunning is revenue you never get back. Connect Stripe and see your exact recovery potential in 2 minutes — free.
             </p>
             <Link href="/signup" onClick={() => trackEvent('cta_clicked', { location: 'footer' })}>
               <Button variant="accent" size="lg" className="group mx-auto">
-                Start recovering revenue
+                Connect Stripe — Start Free
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </Button>
             </Link>
-            <p className="text-white/40 text-sm mt-4">14-day free trial · No credit card · Cancel anytime</p>
+            <p className="text-white/40 text-sm mt-4">
+              Questions? Email us at{' '}
+              <a href="mailto:support@revorva.com" className="underline hover:text-white/60 transition-colors">
+                support@revorva.com
+              </a>
+            </p>
           </div>
         </motion.div>
       </div>

@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button'
 import { trackEvent } from '@/lib/analytics'
 
 const activityFeed = [
-  { icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', text: 'Payment recovered', amount: '$149', company: 'Acme SaaS' },
-  { icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', text: 'Payment recovered', amount: '$79', company: 'Growthly' },
-  { icon: RefreshCw, color: 'text-amber-600', bg: 'bg-amber-50', text: 'Retry scheduled', amount: '$299', company: 'Launchpad' },
+  { icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', text: 'Payment recovered', amount: '$149' },
+  { icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', text: 'Payment recovered', amount: '$79' },
+  { icon: RefreshCw, color: 'text-amber-600', bg: 'bg-amber-50', text: 'Retry scheduled', amount: '$299' },
 ]
 
 const chips = [
@@ -18,7 +18,12 @@ const chips = [
   { color: 'bg-red-400', text: 'Retry scheduled', delay: 1.4 },
 ]
 
-const avatarInitials = ['JK', 'ML', 'DP', 'SC', 'RT']
+const trustItems = [
+  'No credit card required',
+  '14-day free trial',
+  'Setup in 2 minutes',
+  'Cancel anytime',
+]
 
 export function Hero() {
   return (
@@ -47,9 +52,9 @@ export function Hero() {
               transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="font-display text-5xl sm:text-6xl lg:text-[4rem] leading-[1.08] tracking-tight text-ink mb-6"
             >
-              Stop losing money to{' '}
+              Recover the revenue{' '}
               <em className="text-accent not-italic" style={{ fontFamily: 'var(--font-instrument-serif)', fontStyle: 'italic' }}>
-                failed payments
+                Stripe can&apos;t reach
               </em>
             </motion.h1>
 
@@ -59,14 +64,14 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.35 }}
               className="text-lg text-muted leading-relaxed max-w-md mb-8"
             >
-              Revorva connects to Stripe and automatically recovers revenue you're silently losing every month. Set up in 2 minutes. No code required.
+              Failed payments silently kill 4–9% of your MRR every month. Revorva connects to Stripe in 2 minutes and automatically recovers up to 70% of them — with AI-personalized emails and smart retries.
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.45 }}
-              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-10"
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6"
             >
               <Link href="/signup" onClick={() => trackEvent('cta_clicked', { location: 'hero' })}>
                 <Button variant="accent" size="lg" className="group">
@@ -74,29 +79,23 @@ export function Hero() {
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </Button>
               </Link>
-              <p className="text-sm text-muted">No credit card required · Cancel anytime</p>
             </motion.div>
 
-            {/* Social proof avatars */}
+            {/* Trust bar */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-              className="flex items-center gap-3"
+              transition={{ duration: 0.5, delay: 0.55 }}
+              className="flex flex-wrap items-center gap-y-1"
             >
-              <div className="flex -space-x-2">
-                {avatarInitials.map((initials, i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 rounded-full bg-cream border-2 border-paper flex items-center justify-center text-xs font-medium text-ink"
-                  >
-                    {initials}
-                  </div>
-                ))}
-              </div>
-              <p className="text-sm text-muted">
-                Trusted by <span className="text-ink font-medium">200+</span> SaaS founders
-              </p>
+              {trustItems.map((item, i) => (
+                <span key={item} className="flex items-center text-xs text-muted">
+                  {item}
+                  {i < trustItems.length - 1 && (
+                    <span className="mx-2 text-border select-none">•</span>
+                  )}
+                </span>
+              ))}
             </motion.div>
           </div>
 
@@ -148,7 +147,6 @@ export function Hero() {
                     </div>
                     <span className="text-sm text-muted flex-1">{item.text}</span>
                     <span className="text-sm font-medium text-ink">{item.amount}</span>
-                    <span className="text-xs text-muted">{item.company}</span>
                   </motion.div>
                 ))}
               </div>

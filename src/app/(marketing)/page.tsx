@@ -1,42 +1,28 @@
 import { Hero } from '@/components/marketing/Hero'
 import { Problem } from '@/components/marketing/Problem'
+import { MrrCalculator } from '@/components/marketing/MrrCalculator'
 import { HowItWorks } from '@/components/marketing/HowItWorks'
 import { Features } from '@/components/marketing/Features'
-import { EmailPreview } from '@/components/marketing/EmailPreview'
+import { EmailDemo } from '@/components/marketing/EmailDemo'
+import { ComparisonTable } from '@/components/marketing/ComparisonTable'
+import { SecurityTrust } from '@/components/marketing/SecurityTrust'
 import { Pricing } from '@/components/marketing/Pricing'
-import { Testimonials } from '@/components/marketing/Testimonials'
+import { IndustryStats } from '@/components/marketing/IndustryStats'
 import { FinalCTA } from '@/components/marketing/FinalCTA'
-
-// Logo bar companies
-const companies = ['Launchpad', 'Growthly', 'Stackr', 'Notifi', 'Pulseboard', 'Revio']
 
 export default function HomePage() {
   return (
     <>
       <Hero />
-
-      {/* Logo bar */}
-      <div className="bg-cream border-y border-border py-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <p className="text-center text-xs font-semibold text-muted uppercase tracking-widest mb-5">
-            Used by founders at
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-8">
-            {companies.map((name) => (
-              <span key={name} className="text-sm font-medium text-muted/70 font-display italic">
-                {name}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
       <Problem />
+      <MrrCalculator />
       <HowItWorks />
       <Features />
-      <EmailPreview />
+      <EmailDemo />
+      <ComparisonTable />
+      <SecurityTrust />
       <Pricing />
-      <Testimonials />
+      <IndustryStats />
       <FinalCTA />
     </>
   )

@@ -60,28 +60,24 @@ const plans = [
 
 const faqs = [
   {
-    q: 'What happens after the free trial?',
-    a: "You're charged on day 15. We'll remind you on day 12.",
+    q: 'How does the 14-day free trial work?',
+    a: 'Connect Stripe and start recovering immediately. No credit card required. After 14 days, choose a plan or your account pauses — your data stays safe.',
   },
   {
-    q: 'Do you take a % of recovered revenue?',
-    a: 'No. Flat monthly fee only. Keep 100% of what you recover.',
+    q: 'Is my Stripe data secure?',
+    a: "Yes. We use Stripe's official OAuth connection. We never store your customers' card details. All payment data stays within Stripe's secure infrastructure.",
   },
   {
-    q: "What if a payment can't be recovered?",
-    a: "We mark it in your dashboard. You decide next steps.",
+    q: "How is this different from Stripe's built-in dunning?",
+    a: "Stripe's built-in dunning sends a generic email and retries a few times. Revorva sends AI-personalized emails from your domain, retries intelligently over 14 days, and gives you a recovery dashboard to track every dollar.",
   },
   {
-    q: 'Can I cancel anytime?',
-    a: 'Yes. Cancel from your dashboard. No questions asked.',
+    q: 'Can I customize the recovery emails?',
+    a: 'Yes. You can set your business name, brand color, logo, email tone, and for Growth+ plans, send from your own domain (billing@yourdomain.com).',
   },
   {
-    q: 'Does this work with Stripe?',
-    a: 'Yes, Stripe only for now.',
-  },
-  {
-    q: 'What email address do customers receive emails from?',
-    a: 'billing@revorva.com by default, with your business name shown. Scale plan users can use their own domain.',
+    q: 'What happens if I cancel?',
+    a: 'Cancel anytime with one click. Your data is retained for 30 days after cancellation.',
   },
 ]
 
@@ -217,6 +213,9 @@ export function Pricing() {
           ))}
         </div>
 
+        <p className="text-center text-sm font-medium text-ink mb-2">
+          Pays for itself after recovering just one failed payment.
+        </p>
         <p className="text-center text-sm text-muted mb-16">
           All plans include a 14-day free trial. Cancel anytime. No contracts.
         </p>
