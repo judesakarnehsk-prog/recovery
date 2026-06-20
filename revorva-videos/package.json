@@ -1,0 +1,43 @@
+{
+  "name": "revorva-videos",
+  "version": "1.0.0",
+  "description": "My Remotion video",
+  "repository": {},
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@remotion/cli": "4.0.469",
+    "@remotion/google-fonts": "4.0.469",
+    "@remotion/tailwind-v4": "4.0.469",
+    "@remotion/zod-types": "4.0.469",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.469",
+    "tailwindcss": "4.0.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@remotion/eslint-config-flat": "4.0.469",
+    "@types/react": "19.2.7",
+    "@types/web": "0.0.166",
+    "eslint": "9.19.0",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "render": "remotion render RevorvaReel out/revorva-reel.mp4",
+    "render:cinematic": "remotion render CinematicReel out/cinematic-reel.mp4 --quality=100",
+    "render:smart": "remotion render SmartReel out/smart-reel.mp4 --quality=100",
+    "render:reveal": "remotion render ProductReveal out/product-reveal.mp4 --quality=100",
+    "render:launch": "remotion render LaunchVideo out/revorva-launch.mp4 --quality=100",
+    "render:reel": "remotion render LaunchReel out/revorva-reel.mp4 --quality=100",
+    "render:clean": "remotion render CleanLaunch out/revorva-clean-launch.mp4 --quality=100",
+    "upgrade": "remotion upgrade",
+    "lint": "eslint src && tsc"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}

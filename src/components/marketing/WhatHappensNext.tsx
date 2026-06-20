@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { UserPlus, Plug, Palette, CheckCircle } from 'lucide-react'
 
@@ -35,6 +36,25 @@ const steps = [
 ]
 
 export function WhatHappensNext() {
+  const lineRef = useRef<SVGLineElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          lineRef.current?.classList.add('is-visible')
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.3 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <section className="py-24 lg:py-32 bg-paper">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -51,12 +71,22 @@ export function WhatHappensNext() {
         </motion.div>
 
         {/* Desktop horizontal timeline */}
-        <div className="hidden md:block relative">
-          {/* Single continuous dashed line behind icons */}
-          <div
-            className="absolute left-[12.5%] right-[12.5%] border-t-2 border-dashed pointer-events-none z-0"
-            style={{ top: 36, borderColor: 'rgba(15,14,12,0.15)' }}
-          />
+        <div ref={wrapperRef} className="hidden md:block relative">
+          {/* Animated SVG line replacing static dashed div */}
+          <svg
+            className="absolute pointer-events-none z-0 overflow-visible"
+            style={{ top: 36, left: '12.5%', width: '75%', height: 2 }}
+            aria-hidden="true"
+          >
+            <line
+              ref={lineRef}
+              x1="0" y1="1" x2="100%" y2="1"
+              stroke="rgba(15,14,12,0.18)"
+              strokeWidth="2"
+              strokeDasharray="6 4"
+              className="timeline-line"
+            />
+          </svg>
 
           <div className="grid md:grid-cols-4 gap-6 relative z-10">
             {steps.map((step, i) => (

@@ -169,7 +169,14 @@ export function ComparisonTable() {
             </thead>
             <tbody>
               {rows.map((row, i) => (
-                <tr key={row.feature} className={i < rows.length - 1 ? 'border-b border-border' : ''}>
+                <motion.tr
+                  key={row.feature}
+                  initial={{ opacity: 0, x: -12 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ duration: 0.35, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
+                  className={i < rows.length - 1 ? 'border-b border-border' : ''}
+                >
                   <td className="px-5 py-3.5 text-sm font-medium text-ink">{row.feature}</td>
                   <td className="px-5 py-3.5 text-sm text-center"><Cell cell={row.nothing} /></td>
                   <td className="px-5 py-3.5 text-sm text-center"><Cell cell={row.stripe} /></td>
@@ -177,7 +184,7 @@ export function ComparisonTable() {
                   <td className="px-5 py-3.5 text-sm text-center border-l-2 border-[#C94A1F] bg-orange-50/30">
                     <Cell cell={row.revorva} />
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>

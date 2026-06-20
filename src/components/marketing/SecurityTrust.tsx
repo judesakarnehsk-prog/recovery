@@ -55,11 +55,17 @@ export function SecurityTrust() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="bg-white border border-border rounded-2xl p-6"
+              className="bg-white border border-border rounded-2xl p-6 group"
             >
-              <div className="w-10 h-10 rounded-lg bg-accent-light flex items-center justify-center mb-4 flex-shrink-0">
-                <card.icon className="w-5 h-5 text-accent" />
-              </div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.6, rotate: -8 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 + 0.15, ease: [0.22, 1, 0.36, 1] }}
+                className="w-10 h-10 rounded-lg bg-accent-light flex items-center justify-center mb-4 flex-shrink-0 group-hover:bg-accent transition-colors duration-200"
+              >
+                <card.icon className="w-5 h-5 text-accent group-hover:text-white transition-colors duration-200" />
+              </motion.div>
               <h3 className="text-sm font-semibold text-ink mb-2">{card.title}</h3>
               <p className="text-sm text-muted leading-relaxed">{card.body}</p>
             </motion.div>

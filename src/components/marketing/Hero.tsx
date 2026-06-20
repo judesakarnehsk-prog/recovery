@@ -2,14 +2,14 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight, CheckCircle2, RefreshCw } from 'lucide-react'
+import { ArrowRight, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { trackEvent } from '@/lib/analytics'
 
 const activityFeed = [
-  { icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', text: 'Payment recovered', amount: '$149' },
-  { icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', text: 'Payment recovered', amount: '$79' },
-  { icon: RefreshCw, color: 'text-amber-600', bg: 'bg-amber-50', text: 'Retry scheduled', amount: '$299' },
+  { type: 'check', bg: 'bg-green-50', text: 'Payment recovered', amount: '$149', cardClass: 'hero-card-1', checkDelay: '1000ms' },
+  { type: 'check', bg: 'bg-green-50', text: 'Payment recovered', amount: '$79',  cardClass: 'hero-card-2', checkDelay: '1300ms' },
+  { type: 'retry', bg: 'bg-amber-50',  text: 'Retry scheduled',  amount: '$299', cardClass: 'hero-card-3', checkDelay: '' },
 ]
 
 const chips = [
@@ -140,19 +140,32 @@ export function Hero() {
               {/* Activity feed */}
               <div className="space-y-2.5">
                 {activityFeed.map((item, i) => (
-                  <motion.div
+                  <div
                     key={i}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.9 + i * 0.1 }}
-                    className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0"
+                    className={`flex items-center gap-3 py-2 border-b border-border/50 last:border-0 ${item.cardClass}`}
                   >
-                    <div className={`w-6 h-6 rounded-full ${item.bg} flex items-center justify-center flex-shrink-0`}>
-                      <item.icon className={`w-3.5 h-3.5 ${item.color}`} />
+                    <div className={`w-6 h-6 rounded-full ${item.bg} flex items-center justify-center flex-shrink-0 ${item.type === 'retry' ? 'hero-ring-pulse' : ''}`}>
+                      {item.type === 'check' ? (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <circle cx="7" cy="7" r="6" stroke="#16a34a" strokeWidth="1.5" fill="none" />
+                          <path
+                            d="M4 7l2 2 4-4"
+                            stroke="#16a34a"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            fill="none"
+                            className="hero-checkmark"
+                            style={{ animationDelay: item.checkDelay }}
+                          />
+                        </svg>
+                      ) : (
+                        <RefreshCw className="w-3.5 h-3.5 text-amber-600" />
+                      )}
                     </div>
                     <span className="text-sm text-muted flex-1">{item.text}</span>
                     <span className="text-sm font-medium text-ink">{item.amount}</span>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </motion.div>

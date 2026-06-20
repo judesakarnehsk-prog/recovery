@@ -70,7 +70,7 @@ export function IntegrationsRoadmap() {
                   {integration.logo}
                   <span className="font-medium text-ink">{integration.name}</span>
                 </div>
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${integration.badgeColor}`}>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border animate-badge-glow ${integration.badgeColor}`}>
                   {integration.badge}
                 </span>
               </motion.div>

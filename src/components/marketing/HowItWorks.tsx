@@ -50,9 +50,16 @@ export function HowItWorks() {
                 transition={{ duration: 0.5, delay: i * 0.15 }}
                 className="bg-white border border-border rounded-2xl p-6 flex-1"
               >
-                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-card" style={{ backgroundColor: '#C94A1F' }}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5, rotate: -15 }}
+                  whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.55, delay: i * 0.15 + 0.1, ease: [0.22, 1, 0.36, 1] }}
+                  className="w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-card"
+                  style={{ backgroundColor: '#C94A1F' }}
+                >
                   <step.icon className="w-8 h-8 text-white" />
-                </div>
+                </motion.div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-widest mb-2">{step.number}</p>
                 <h3 className="text-lg font-semibold text-ink mb-3">{step.title}</h3>
                 <p className="text-sm text-muted leading-relaxed">{step.body}</p>
