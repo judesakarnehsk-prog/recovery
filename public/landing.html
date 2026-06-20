@@ -9,6 +9,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
+    /* ── Fix 6: Body failsafe — visible before fonts/JS load ─────── */
+    html, body {
+      background: #080808;
+      color: #F2F2F2;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
     /* ── Reset & Tokens ──────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -35,7 +43,7 @@
     body {
       background: var(--bg);
       color: var(--text-primary);
-      font-family: 'Inter', sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       font-size: 15px;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
@@ -56,7 +64,7 @@
     .section { padding: 120px 0; }
     .section--tight { padding: 80px 0; }
     .eyebrow {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       font-size: 11px;
       font-weight: 500;
       letter-spacing: 0.08em;
@@ -65,14 +73,14 @@
       margin-bottom: 16px;
     }
     .section-title {
-      font-family: 'Sora', sans-serif;
+      font-family: 'Sora', system-ui, -apple-system, sans-serif;
       font-size: clamp(32px, 4vw, 48px);
       font-weight: 700;
       letter-spacing: -0.02em;
       color: var(--text-primary);
       line-height: 1.15;
     }
-    .mono { font-family: 'JetBrains Mono', monospace; }
+    .mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
 
     /* ── Buttons ─────────────────────────────────────────────────── */
     .btn-primary {
@@ -154,7 +162,7 @@
       gap: 32px;
     }
     .nav-logo {
-      font-family: 'Sora', sans-serif;
+      font-family: 'Sora', system-ui, -apple-system, sans-serif;
       font-weight: 700;
       font-size: 17px;
       color: var(--text-primary);
@@ -233,7 +241,7 @@
       animation: slideUp 0.4s ease 0.1s forwards;
     }
     .hero-h1 {
-      font-family: 'Sora', sans-serif;
+      font-family: 'Sora', system-ui, -apple-system, sans-serif;
       font-size: clamp(40px, 5.5vw, 72px);
       font-weight: 800;
       letter-spacing: -0.04em;
@@ -315,7 +323,7 @@
       background: var(--border);
       border-radius: 4px;
       padding: 3px 10px;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 11px;
       color: var(--text-muted);
       display: flex;
@@ -382,7 +390,7 @@
     .feed-dot.retry { background: #60A5FA; }
     .feed-center { flex: 1; min-width: 0; }
     .feed-email {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 12px;
       color: var(--text-secondary);
       white-space: nowrap;
@@ -414,7 +422,7 @@
     }
     .feed-counter { text-align: center; }
     .feed-counter-val {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 15px;
       font-weight: 500;
       color: var(--text-primary);
@@ -462,7 +470,7 @@
     .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 40px 0; }
     .stat-card { padding: 28px; }
     .stat-val {
-      font-family: 'Sora', sans-serif;
+      font-family: 'Sora', system-ui, -apple-system, sans-serif;
       font-size: 48px;
       font-weight: 800;
       letter-spacing: -0.03em;
@@ -500,7 +508,7 @@
     }
     .calc-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; display: flex; justify-content: space-between; }
     .calc-mrr-val {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 28px;
       font-weight: 500;
       color: var(--text-primary);
@@ -548,7 +556,7 @@
     .calc-output.positive { border-color: rgba(245,120,10,0.3); background: var(--accent-dim); }
     .calc-output-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 8px; }
     .calc-output-val {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 28px;
       font-weight: 500;
       color: var(--text-secondary);
@@ -557,7 +565,7 @@
     .calc-output.positive .calc-output-val { color: var(--accent); }
     .calc-cta { text-align: center; }
     .calc-cta-text { font-size: 16px; color: var(--text-secondary); margin-bottom: 16px; }
-    .calc-cta-text strong { color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+    .calc-cta-text strong { color: var(--accent); font-family: 'JetBrains Mono', 'Courier New', monospace; }
 
     /* ── HOW IT WORKS ────────────────────────────────────────────── */
     .steps-row {
@@ -578,7 +586,7 @@
     }
     .step { padding: 0 24px; position: relative; z-index: 1; }
     .step-number {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 11px;
       font-weight: 500;
       color: var(--accent);
@@ -592,7 +600,7 @@
       margin: 0 auto 20px;
     }
     .step-title {
-      font-family: 'Sora', sans-serif;
+      font-family: 'Sora', system-ui, -apple-system, sans-serif;
       font-size: 18px;
       font-weight: 600;
       margin-bottom: 10px;
@@ -695,7 +703,7 @@
       padding: 20px;
       font-size: 13px;
     }
-    .email-from { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
+    .email-from { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
     .email-subject { font-weight: 600; color: var(--text-primary); margin-bottom: 12px; font-size: 14px; }
     .email-body { color: var(--text-secondary); line-height: 1.6; }
     .email-highlight { color: var(--accent); background: rgba(245,120,10,0.08); padding: 0 3px; border-radius: 3px; }
@@ -733,7 +741,7 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 8px 14px;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 13px;
       color: var(--text-secondary);
     }
@@ -780,7 +788,7 @@
       padding: 16px 20px;
       border-bottom: 1px solid var(--border);
     }
-    .live-email-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); line-height: 1.8; }
+    .live-email-meta { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 11px; color: var(--text-muted); line-height: 1.8; }
     .live-email-meta span { color: var(--text-secondary); }
     .live-email-body { padding: 20px; }
     .live-email-subject { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; }
@@ -825,7 +833,7 @@
     }
     .comp-table th {
       padding: 14px 16px;
-      font-family: 'Sora', sans-serif;
+      font-family: 'Sora', system-ui, -apple-system, sans-serif;
       font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
@@ -931,7 +939,7 @@
     }
     .pricing-plan { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; }
     .pricing-price {
-      font-family: 'Sora', sans-serif;
+      font-family: 'Sora', system-ui, -apple-system, sans-serif;
       font-size: 40px;
       font-weight: 800;
       color: var(--text-primary);
@@ -1018,7 +1026,7 @@
     }
     .final-cta-inner { position: relative; z-index: 1; }
     .final-h2 {
-      font-family: 'Sora', sans-serif;
+      font-family: 'Sora', system-ui, -apple-system, sans-serif;
       font-size: clamp(36px, 5vw, 56px);
       font-weight: 800;
       letter-spacing: -0.03em;
@@ -1041,7 +1049,7 @@
     }
     .footer-brand {}
     .footer-logo {
-      font-family: 'Sora', sans-serif;
+      font-family: 'Sora', system-ui, -apple-system, sans-serif;
       font-weight: 700;
       font-size: 16px;
       color: var(--text-primary);
@@ -1101,16 +1109,27 @@
       .feed-counters { grid-template-columns: 1fr; gap: 4px; }
     }
 
-    /* ── Reduced motion ──────────────────────────────────────────── */
+    /* ── Fix 1: Reduced motion + no-script fallback ─────────────── */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
-      .reveal { opacity: 1; transform: none; }
-      nav, .hero-badge, .hero-h1, .hero-sub, .hero-ctas, .hero-microcopy, .hero-right {
-        opacity: 1; animation: none;
+      .reveal, nav, .hero-badge, .hero-h1, .hero-sub, .hero-ctas,
+      .hero-microcopy, .hero-right {
+        opacity: 1 !important;
+        transform: none !important;
+        animation: none !important;
+      }
+    }
+    /* No-JS / scripting disabled fallback */
+    @media (scripting: none) {
+      .reveal, nav, .hero-badge, .hero-h1, .hero-sub, .hero-ctas,
+      .hero-microcopy, .hero-right {
+        opacity: 1 !important;
+        transform: none !important;
+        animation: none !important;
       }
     }
   </style>
@@ -1792,291 +1811,310 @@
 </footer>
 
 <script>
-// ── Feed events data ──────────────────────────────────────────────
-const feedEvents = [
-  { type:'recovered',  customer:'sarah@notion.io',      amount:'$149', plan:'Growth',  time:'just now' },
-  { type:'recovered',  customer:'james@linear.app',     amount:'$299', plan:'Scale',   time:'12s ago' },
-  { type:'email_sent', customer:'lena@figma.com',        amount:'$79',  plan:'Starter', time:'34s ago' },
-  { type:'retry',      customer:'tom@vercel.team',       amount:'$199', plan:'Growth',  time:'1m ago' },
-  { type:'recovered',  customer:'priya@railway.app',     amount:'$49',  plan:'Starter', time:'2m ago' },
-  { type:'email_sent', customer:'alex@planetscale.com',  amount:'$399', plan:'Scale',   time:'3m ago' },
-  { type:'recovered',  customer:'diana@supabase.io',     amount:'$129', plan:'Growth',  time:'4m ago' },
-];
-
-const dotColors = { recovered:'var(--green)', email_sent:'var(--accent)', retry:'#60A5FA' };
-const statusLabels = { recovered:'Recovered', email_sent:'Email sent', retry:'Retry queued' };
-
-function makeFeedItem(ev) {
-  const item = document.createElement('div');
-  item.className = 'feed-item' + (ev.type === 'recovered' ? ' recovered' : '');
-  item.innerHTML = `
-    <div class="feed-dot ${ev.type}" style="background:${dotColors[ev.type]}"></div>
-    <div class="feed-center">
-      <div class="feed-email">${ev.customer}<span class="feed-plan">${ev.plan}</span></div>
-    </div>
-    <div class="feed-right">
-      <div class="feed-amount">${ev.amount}</div>
-      <div class="feed-status">${statusLabels[ev.type]} · ${ev.time}</div>
-    </div>
-  `;
-  return item;
-}
-
-function initFeed() {
-  const list = document.getElementById('feed-list');
-  const visible = feedEvents.slice(0, 5);
-  visible.forEach(ev => list.appendChild(makeFeedItem(ev)));
-  let idx = visible.length;
-  setInterval(() => {
-    const ev = feedEvents[idx % feedEvents.length];
-    const newItem = makeFeedItem(ev);
-    newItem.style.opacity = '0';
-    newItem.style.transform = 'translateY(8px)';
-    list.appendChild(newItem);
-    requestAnimationFrame(() => {
-      newItem.style.transition = 'opacity 0.4s, transform 0.4s';
-      newItem.style.opacity = '1';
-      newItem.style.transform = 'translateY(0)';
-    });
-    const first = list.firstElementChild;
-    if (first) {
-      first.style.transition = 'opacity 0.4s, transform 0.4s';
-      first.style.opacity = '0';
-      first.style.transform = 'translateY(-8px)';
-      setTimeout(() => first.remove(), 400);
-    }
-    idx++;
-  }, 2500);
-}
-
-// ── Counter animation ─────────────────────────────────────────────
-function animateCounter(el, targetRaw, prefix, suffix, duration) {
-  const start = performance.now();
-  const isFloat = targetRaw % 1 !== 0;
-  function tick(now) {
-    const p = Math.min((now - start) / duration, 1);
-    const eased = 1 - Math.pow(1 - p, 3);
-    const val = eased * targetRaw;
-    const disp = targetRaw >= 1000
-      ? prefix + Math.round(val).toLocaleString() + suffix
-      : prefix + (isFloat ? val.toFixed(0) : Math.round(val)) + suffix;
-    el.textContent = disp;
-    if (p < 1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-}
-
-function initCounters() {
-  setTimeout(() => {
-    animateCounter(document.getElementById('counter-recovered'), 4280, '$', '', 1500);
-    animateCounter(document.getElementById('counter-count'), 37, '', '', 1200);
-    animateCounter(document.getElementById('counter-rate'), 68, '', '%', 1400);
-  }, 600);
-}
-
-// ── Nav scroll ───────────────────────────────────────────────────
-window.addEventListener('scroll', () => {
-  document.getElementById('main-nav').classList.toggle('scrolled', window.scrollY > 20);
-}, { passive: true });
-
-// ── Reveal on scroll ─────────────────────────────────────────────
-const revealObserver = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObserver.unobserve(e.target); } });
-}, { threshold: 0.15 });
-
-function initReveal() {
-  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
-}
-
-// ── Tabs ─────────────────────────────────────────────────────────
-function switchTab(idx) {
-  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
-  document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
-}
-
-// ── Branding preview ─────────────────────────────────────────────
-let currentTone = 'Friendly';
-function setTone(btn, tone) {
-  document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  currentTone = tone;
-  updateBrandPreview();
-}
-function updateBrandPreview() {
-  const name = document.getElementById('brand-name-input').value || 'Your Company';
-  document.getElementById('brand-preview-name').textContent = name;
-  document.getElementById('brand-preview-plan').textContent = name;
-  document.getElementById('brand-preview-subject').textContent = `Hey Sarah, quick note about your ${name} subscription`;
-}
-
-// ── Email customizer ─────────────────────────────────────────────
-const ctrlState = { tone: 'friendly', day: '0' };
-function setCtrlToggle(btn) {
-  const group = btn.dataset.group;
-  document.querySelectorAll(`[data-group="${group}"]`).forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  ctrlState[group] = btn.dataset.val;
-  updateEmailPreview();
-}
-
-const emailSubjects = {
-  friendly: { '0':'Hey [Name], quick note about your [Biz] payment', '7':'Still there, [Name]? Your [Biz] payment is waiting', final:'Last chance to keep your [Biz] subscription, [Name]' },
-  professional: { '0':'Action required: [Biz] payment unsuccessful', '7':'Reminder: [Biz] payment pending — action needed', final:'Final notice: [Biz] subscription at risk' },
-  empathetic: { '0':'We noticed a hiccup with your [Biz] payment, [Name]', '7':'Just checking in about your [Biz] subscription, [Name]', final:'We'd hate to lose you, [Name]' },
-};
-const emailBodies = {
-  friendly: { '0':'Hey [Name],\n\nYour [Amount] payment for [Biz] didn\'t go through — no worries, it happens! Could you take 30 seconds to update your card?\n\nWe\'d hate to lose you.', '7':'Hey [Name],\n\nJust a friendly reminder — your [Amount] payment for [Biz] is still pending. Super quick to fix!', final:'Hey [Name],\n\nThis is our last reminder about the [Amount] owed on your [Biz] account. We\'d love to keep you.' },
-  professional: { '0':'Dear [Name],\n\nYour payment of [Amount] for [Biz] could not be processed. Please update your payment details at your earliest convenience.', '7':'Dear [Name],\n\nThis is a follow-up regarding the outstanding payment of [Amount] for your [Biz] subscription.', final:'Dear [Name],\n\nThis is a final notice regarding your [Amount] payment. Your [Biz] account will be suspended if not resolved.' },
-  empathetic: { '0':'Hi [Name],\n\nWe noticed your [Amount] payment for [Biz] didn\'t go through. We know these things happen — please don\'t worry.', '7':'Hi [Name],\n\nWe\'re just gently following up on your [Biz] subscription. We\'d genuinely hate for you to lose access.', final:'Hi [Name],\n\nWe truly don\'t want to lose you as a customer. Your [Amount] payment is all that\'s standing between you and continued access to [Biz].' },
-};
-
-function updateEmailPreview() {
-  const biz    = document.getElementById('ctrl-biz').value    || 'Acme SaaS';
-  const name   = document.getElementById('ctrl-name').value   || 'there';
-  const amount = document.getElementById('ctrl-amount').value || '$49';
-  const tone   = ctrlState.tone;
-  const day    = ctrlState.day;
-
-  const subj = emailSubjects[tone][day]
-    .replace(/\[Name\]/g, name).replace(/\[Biz\]/g, biz).replace(/\[Amount\]/g, amount);
-  const body = emailBodies[tone][day]
-    .replace(/\[Name\]/g, `<span style="color:var(--accent)">${name}</span>`)
-    .replace(/\[Biz\]/g,  `<span style="color:var(--accent)">${biz}</span>`)
-    .replace(/\[Amount\]/g, `<span style="color:var(--accent)">${amount}</span>`)
-    .replace(/\n/g, '<br>');
-
-  document.getElementById('pe-from').textContent = `${biz} Billing <billing@revorva.com>`;
-  document.getElementById('pe-subject').textContent = subj;
-  document.getElementById('pe-body').innerHTML = body;
-  document.getElementById('pe-footer').textContent = `Sent by ${biz} · Powered by Revorva`;
-  document.getElementById('pe-compare').textContent = `Hey ${name}, your ${amount} ${biz} payment didn't go through — want to update your card real quick?`;
-}
-
-// ── MRR Calculator ────────────────────────────────────────────────
-function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
-function animateNum(el, target, prefix, suffix) {
-  const start = performance.now();
-  const duration = 220;
-  const from = parseFloat(el.dataset.val || '0') || 0;
-  el.dataset.val = target;
-  function tick(now) {
-    const p = Math.min((now - start) / duration, 1);
-    const eased = 1 - Math.pow(1 - p, 3);
-    const val = from + (target - from) * eased;
-    el.textContent = prefix + Math.round(val).toLocaleString() + suffix;
-    if (p < 1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-}
-
-function updateCalc() {
-  const mrr      = parseInt(document.getElementById('mrr-slider').value);
-  const monthly  = mrr * 0.06;
-  const yearly   = monthly * 12;
-  const recoverable = monthly * 0.7;
-  const daily    = monthly / 30;
-
-  const pct = (mrr - 1000) / (500000 - 1000) * 100;
-  const slider = document.getElementById('mrr-slider');
-  slider.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--border) ${pct}%)`;
-
-  document.getElementById('calc-mrr-display').textContent = mrr >= 1000 ? '$' + (mrr/1000).toFixed(mrr % 1000 === 0 ? 0 : 1) + 'k' : '$' + mrr;
-  animateNum(document.getElementById('calc-monthly'),    monthly,    '$', '');
-  animateNum(document.getElementById('calc-yearly'),     yearly,     '$', '');
-  animateNum(document.getElementById('calc-recoverable'),recoverable,'$', '/mo');
-  animateNum(document.getElementById('calc-daily'),      daily,      '$', '');
-}
-
-document.getElementById('mrr-slider').addEventListener('input', updateCalc);
-updateCalc();
-
-// ── Comparison table data ─────────────────────────────────────────
-const compRows = [
-  ['Smart retry schedule',       '❌ None',          '❌ Basic only',    '✅ Day 0, 3, 7, 14'],
-  ['AI-personalized emails',     '❌ None',          '❌ Generic',       '✅ Name, amount, tone'],
-  ['Custom sender domain',       '❌ None',          '❌ Not available', '✅ billing@yourdomain'],
-  ['Recovery dashboard',         '❌ None',          '❌ Not included',  '✅ Real-time tracking'],
-  ['Per-customer control',       '❌ None',          '❌ Not available', '✅ Skip / pause per customer'],
-  ['Bank-cycle-timed retries',   '❌ None',          '❌ Fixed schedule','✅ Optimised timing'],
-  ['Pause / skip per customer',  '❌ None',          '❌ Not available', '✅ One click'],
-  ['Detailed analytics',         '❌ None',          '❌ Basic only',    '✅ Real-time dashboard'],
-  ['Setup time',                 'N/A',              'Minimal',          '✅ 2 minutes'],
-  ['Starting price',             '$0 (losing MRR)',  '$0 (limited)',     '✅ $29/mo'],
-  ['14-day free trial',          'N/A',              'N/A',              '✅'],
-  ['Made for early-stage SaaS',  'N/A',              'Generic',          '✅'],
-];
-
-function buildCompTable() {
-  const tbody = document.getElementById('comp-tbody');
-  compRows.forEach(([feature, nothing, stripe, revorva]) => {
-    const tr = document.createElement('tr');
-    const nClass = nothing.startsWith('❌') ? 'comp-no' : 'comp-neutral';
-    const sClass = stripe.startsWith('❌') ? 'comp-no' : 'comp-neutral';
-    tr.innerHTML = `
-      <td style="font-size:13px;font-weight:500;color:var(--text-secondary)">${feature}</td>
-      <td class="center"><span class="${nClass}">${nothing}</span></td>
-      <td class="center"><span class="${sClass}">${stripe}</span></td>
-      <td class="revorva-col">${revorva}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// ── FAQ ───────────────────────────────────────────────────────────
-const faqs = [
-  ['How does the 14-day free trial work?', 'Sign up, connect Stripe, and Revorva starts working immediately — no credit card required. You get full access for 14 days. After the trial ends, you can choose a plan or your account pauses. All your recovery history is saved.'],
-  ['Is my Stripe data secure?', 'Yes. We connect through Stripe\'s official OAuth — no API keys, no stored credentials. We only request the minimum permissions needed (read-only where possible), and you can revoke access from your Stripe dashboard at any time.'],
-  ['How is this different from Stripe\'s built-in dunning?', 'Stripe\'s smart retries retry on a fixed internal schedule with no customer outreach. Revorva adds bank-cycle-timed retries, AI-personalized dunning emails with your branding, a full recovery dashboard, and per-customer controls. We work alongside Stripe — adding the layer it\'s missing.'],
-  ['Can I customize the recovery emails?', 'Yes. You can set your business name, logo, brand color, and email tone (Friendly / Professional / Empathetic). On Growth+ plans, emails send from your own domain (billing@yourdomain.com).'],
-  ['How smart is the AI email generation?', 'Each email is personalized with the customer\'s first name, the exact amount owed, and your business name. The tone adapts based on which retry day it is. Day 0 is warm and helpful. Day 14 is more urgent — but never aggressive.'],
-  ['What happens if I cancel?', 'You can cancel anytime from your billing settings. Active recovery sequences for in-progress failed payments will complete. Your data is retained for 90 days after cancellation in case you return.'],
-];
-
-function buildFaq() {
-  const list = document.getElementById('faq-list');
-  faqs.forEach(([q, a]) => {
-    const item = document.createElement('div');
-    item.className = 'faq-item';
-    item.innerHTML = `
-      <button class="faq-q" onclick="toggleFaq(this)">
-        <span>${q}</span>
-        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-      <div class="faq-a"><div class="faq-a-inner">${a}</div></div>
-    `;
-    list.appendChild(item);
-  });
-}
-
-function toggleFaq(btn) {
-  const item = btn.closest('.faq-item');
-  const ans  = item.querySelector('.faq-a');
-  const isOpen = item.classList.contains('open');
-  document.querySelectorAll('.faq-item.open').forEach(i => {
-    i.classList.remove('open');
-    i.querySelector('.faq-a').style.maxHeight = '0';
-  });
-  if (!isOpen) {
-    item.classList.add('open');
-    ans.style.maxHeight = ans.scrollHeight + 'px';
-  }
-}
-
-// ── Pricing toggle ────────────────────────────────────────────────
-const prices = {
-  monthly: { starter:29, growth:79, scale:149 },
-  annual:  { starter:23, growth:63, scale:119 },
-};
-function setPricing(mode) {
-  document.getElementById('toggle-monthly').classList.toggle('active', mode === 'monthly');
-  document.getElementById('toggle-annual').classList.toggle('active', mode === 'annual');
-  document.getElementById('price-starter').textContent = prices[mode].starter;
-  document.getElementById('price-growth').textContent  = prices[mode].growth;
-  document.getElementById('price-scale').textContent   = prices[mode].scale;
-}
-
-// ── Init ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+
+  // ── Fix 1: Hard failsafe — force all animated elements visible after 2s ──
+  setTimeout(() => {
+    document.querySelectorAll(
+      '.reveal, .hero-badge, .hero-h1, .hero-sub, .hero-ctas, .hero-microcopy, .hero-right, nav, h1, h2, .eyebrow, section, .stat-card, .pricing-card, .step, .card'
+    ).forEach(el => {
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    });
+  }, 2000);
+
+  // ── Feed events ────────────────────────────────────────────────
+  const feedEvents = [
+    { type:'recovered',  customer:'sarah@notion.io',      amount:'$149', plan:'Growth',  time:'just now' },
+    { type:'recovered',  customer:'james@linear.app',     amount:'$299', plan:'Scale',   time:'12s ago' },
+    { type:'email_sent', customer:'lena@figma.com',        amount:'$79',  plan:'Starter', time:'34s ago' },
+    { type:'retry',      customer:'tom@vercel.team',       amount:'$199', plan:'Growth',  time:'1m ago' },
+    { type:'recovered',  customer:'priya@railway.app',     amount:'$49',  plan:'Starter', time:'2m ago' },
+    { type:'email_sent', customer:'alex@planetscale.com',  amount:'$399', plan:'Scale',   time:'3m ago' },
+    { type:'recovered',  customer:'diana@supabase.io',     amount:'$129', plan:'Growth',  time:'4m ago' },
+  ];
+  const dotColors    = { recovered:'var(--green)', email_sent:'var(--accent)', retry:'#60A5FA' };
+  const statusLabels = { recovered:'Recovered', email_sent:'Email sent', retry:'Retry queued' };
+
+  function makeFeedItem(ev) {
+    const item = document.createElement('div');
+    item.className = 'feed-item' + (ev.type === 'recovered' ? ' recovered' : '');
+    item.innerHTML = `
+      <div class="feed-dot ${ev.type}" style="background:${dotColors[ev.type]}"></div>
+      <div class="feed-center">
+        <div class="feed-email">${ev.customer}<span class="feed-plan">${ev.plan}</span></div>
+      </div>
+      <div class="feed-right">
+        <div class="feed-amount">${ev.amount}</div>
+        <div class="feed-status">${statusLabels[ev.type]} &middot; ${ev.time}</div>
+      </div>
+    `;
+    return item;
+  }
+
+  function initFeed() {
+    const list = document.getElementById('feed-list');
+    if (!list) return;
+    feedEvents.slice(0, 5).forEach(ev => list.appendChild(makeFeedItem(ev)));
+    let idx = 5;
+    setInterval(() => {
+      const ev = feedEvents[idx % feedEvents.length];
+      const newItem = makeFeedItem(ev);
+      newItem.style.opacity = '0';
+      newItem.style.transform = 'translateY(8px)';
+      list.appendChild(newItem);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          newItem.style.transition = 'opacity 0.4s, transform 0.4s';
+          newItem.style.opacity = '1';
+          newItem.style.transform = 'translateY(0)';
+        });
+      });
+      const first = list.firstElementChild;
+      if (first) {
+        first.style.transition = 'opacity 0.4s, transform 0.4s';
+        first.style.opacity = '0';
+        first.style.transform = 'translateY(-8px)';
+        setTimeout(() => { if (first.parentNode) first.remove(); }, 420);
+      }
+      idx++;
+    }, 2500);
+  }
+
+  // ── Fix 5: Counter animation with explicit targets + RAF easeOut ─
+  function animateCounter(elId, target, prefix, suffix, duration) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const start = performance.now();
+    function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const val = eased * target;
+      el.textContent = prefix + (target >= 1000 ? Math.round(val).toLocaleString() : Math.round(val)) + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+      else el.textContent = prefix + (target >= 1000 ? target.toLocaleString() : target) + suffix;
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function initCounters() {
+    animateCounter('counter-recovered', 4280, '$', '',  1500);
+    animateCounter('counter-count',       37, '',  '',  1200);
+    animateCounter('counter-rate',        68, '',  '%', 1400);
+  }
+
+  // ── Nav scroll ─────────────────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    const nav = document.getElementById('main-nav');
+    if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  // ── Reveal on scroll ───────────────────────────────────────────
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        revealObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  function initReveal() {
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+  }
+
+  // ── Tabs ───────────────────────────────────────────────────────
+  window.switchTab = function(idx) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+    document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+  };
+
+  // ── Branding preview ───────────────────────────────────────────
+  window.setTone = function(btn, tone) {
+    document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    updateBrandPreview();
+  };
+  function updateBrandPreview() {
+    const inp = document.getElementById('brand-name-input');
+    const name = (inp && inp.value) ? inp.value : 'Your Company';
+    const n = document.getElementById('brand-preview-name');
+    const p = document.getElementById('brand-preview-plan');
+    const s = document.getElementById('brand-preview-subject');
+    if (n) n.textContent = name;
+    if (p) p.textContent = name;
+    if (s) s.textContent = 'Hey Sarah, quick note about your ' + name + ' subscription';
+  }
+  window.updateBrandPreview = updateBrandPreview;
+
+  // ── Email customizer ───────────────────────────────────────────
+  const ctrlState = { tone: 'friendly', day: '0' };
+  window.setCtrlToggle = function(btn) {
+    const group = btn.dataset.group;
+    document.querySelectorAll('[data-group="' + group + '"]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ctrlState[group] = btn.dataset.val;
+    updateEmailPreview();
+  };
+
+  const emailSubjects = {
+    friendly:     { '0':'Hey [Name], quick note about your [Biz] payment', '7':'Still there, [Name]? Your [Biz] payment is waiting', 'final':'Last chance to keep your [Biz] subscription, [Name]' },
+    professional: { '0':'Action required: [Biz] payment unsuccessful', '7':'Reminder: [Biz] payment pending — action needed', 'final':'Final notice: [Biz] subscription at risk' },
+    empathetic:   { '0':'We noticed a hiccup with your [Biz] payment, [Name]', '7':'Just checking in about your [Biz] subscription, [Name]', 'final':'We would hate to lose you, [Name]' },
+  };
+  const emailBodies = {
+    friendly:     { '0':'Hey [Name],\n\nYour [Amount] payment for [Biz] did not go through — no worries, it happens! Could you take 30 seconds to update your card?\n\nWe would hate to lose you.', '7':'Hey [Name],\n\nJust a friendly reminder — your [Amount] payment for [Biz] is still pending. Super quick to fix!', 'final':'Hey [Name],\n\nThis is our last reminder about the [Amount] owed on your [Biz] account. We would love to keep you.' },
+    professional: { '0':'Dear [Name],\n\nYour payment of [Amount] for [Biz] could not be processed. Please update your payment details at your earliest convenience.', '7':'Dear [Name],\n\nThis is a follow-up regarding the outstanding payment of [Amount] for your [Biz] subscription.', 'final':'Dear [Name],\n\nThis is a final notice regarding your [Amount] payment. Your [Biz] account will be suspended if not resolved.' },
+    empathetic:   { '0':'Hi [Name],\n\nWe noticed your [Amount] payment for [Biz] did not go through. We know these things happen — please do not worry.', '7':'Hi [Name],\n\nWe are just gently following up on your [Biz] subscription. We would genuinely hate for you to lose access.', 'final':'Hi [Name],\n\nWe truly do not want to lose you as a customer. Your [Amount] payment is all that is standing between you and continued access to [Biz].' },
+  };
+
+  function updateEmailPreview() {
+    const biz    = (document.getElementById('ctrl-biz')    || {}).value || 'Acme SaaS';
+    const name   = (document.getElementById('ctrl-name')   || {}).value || 'there';
+    const amount = (document.getElementById('ctrl-amount') || {}).value || '$49';
+    const tone = ctrlState.tone;
+    const day  = ctrlState.day;
+    const subj = (emailSubjects[tone] && emailSubjects[tone][day])
+      ? emailSubjects[tone][day].replace(/\[Name\]/g, name).replace(/\[Biz\]/g, biz).replace(/\[Amount\]/g, amount)
+      : '';
+    const body = (emailBodies[tone] && emailBodies[tone][day])
+      ? emailBodies[tone][day]
+          .replace(/\[Name\]/g,   '<span style="color:var(--accent)">' + name   + '</span>')
+          .replace(/\[Biz\]/g,    '<span style="color:var(--accent)">' + biz    + '</span>')
+          .replace(/\[Amount\]/g, '<span style="color:var(--accent)">' + amount + '</span>')
+          .replace(/\n/g, '<br>')
+      : '';
+    const pf = document.getElementById('pe-from');    if (pf) pf.textContent  = biz + ' Billing <billing@revorva.com>';
+    const ps = document.getElementById('pe-subject'); if (ps) ps.textContent  = subj;
+    const pb = document.getElementById('pe-body');    if (pb) pb.innerHTML    = body;
+    const pfoot = document.getElementById('pe-footer'); if (pfoot) pfoot.textContent = 'Sent by ' + biz + ' \xB7 Powered by Revorva';
+    const pc = document.getElementById('pe-compare'); if (pc) pc.textContent  = 'Hey ' + name + ', your ' + amount + ' ' + biz + ' payment did not go through — want to update your card real quick?';
+  }
+  window.updateEmailPreview = updateEmailPreview;
+
+  // ── MRR Calculator ─────────────────────────────────────────────
+  function animateNum(el, target, prefix, suffix) {
+    const start = performance.now();
+    const duration = 220;
+    const from = parseFloat(el.dataset.val || '0') || 0;
+    el.dataset.val = target;
+    function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const val = from + (target - from) * eased;
+      el.textContent = prefix + Math.round(val).toLocaleString() + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function updateCalc() {
+    const slider = document.getElementById('mrr-slider');
+    if (!slider) return;
+    const mrr         = parseInt(slider.value);
+    const monthly     = mrr * 0.06;
+    const yearly      = monthly * 12;
+    const recoverable = monthly * 0.7;
+    const daily       = monthly / 30;
+    const pct = (mrr - 1000) / (500000 - 1000) * 100;
+    slider.style.background = 'linear-gradient(to right, var(--accent) ' + pct + '%, var(--border) ' + pct + '%)';
+    const disp = document.getElementById('calc-mrr-display');
+    if (disp) disp.textContent = mrr >= 1000 ? '$' + (mrr / 1000).toFixed(mrr % 1000 === 0 ? 0 : 1) + 'k' : '$' + mrr;
+    const m = document.getElementById('calc-monthly');     if (m) animateNum(m, monthly,    '$', '');
+    const y = document.getElementById('calc-yearly');      if (y) animateNum(y, yearly,     '$', '');
+    const r = document.getElementById('calc-recoverable'); if (r) animateNum(r, recoverable,'$', '/mo');
+    const d = document.getElementById('calc-daily');       if (d) animateNum(d, daily,      '$', '');
+  }
+  const mrrSlider = document.getElementById('mrr-slider');
+  if (mrrSlider) { mrrSlider.addEventListener('input', updateCalc); updateCalc(); }
+
+  // ── Fix 4: Comparison table — all rows inlined ─────────────────
+  const compRows = [
+    ['Smart retry schedule',      '❌ None',         '❌ Basic only',    '✅ Day 0, 3, 7, 14'],
+    ['AI-personalized emails',    '❌ None',         '❌ Generic',       '✅ Name, amount, tone'],
+    ['Custom sender domain',      '❌ None',         '❌ Not available', '✅ Growth+ plans'],
+    ['Recovery dashboard',        '❌ None',         '❌ Not included',  '✅ Real-time tracking'],
+    ['Per-customer control',      '❌ None',         '❌ Not available', '✅ Skip / pause'],
+    ['Bank-cycle retries',        '❌ None',         '❌ Fixed schedule','✅ Optimised timing'],
+    ['Setup time',                'N/A',             'Minimal',          '✅ 2 minutes'],
+    ['Starting price',            '$0 (losing MRR)', '$0 (limited)',     '✅ $29/mo'],
+    ['14-day free trial',         '❌',              '❌',               '✅'],
+  ];
+
+  function buildCompTable() {
+    const tbody = document.getElementById('comp-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    compRows.forEach(function(row) {
+      const feature = row[0], nothing = row[1], stripe = row[2], revorva = row[3];
+      const tr = document.createElement('tr');
+      const nClass = nothing.indexOf('❌') >= 0 ? 'comp-no' : 'comp-neutral';
+      const sClass = stripe.indexOf('❌')  >= 0 ? 'comp-no' : 'comp-neutral';
+      tr.innerHTML =
+        '<td style="font-size:13px;font-weight:500;color:var(--text-secondary)">' + feature + '</td>' +
+        '<td class="center"><span class="' + nClass + '">' + nothing + '</span></td>' +
+        '<td class="center"><span class="' + sClass + '">' + stripe  + '</span></td>' +
+        '<td class="revorva-col">' + revorva + '</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ── FAQ ────────────────────────────────────────────────────────
+  const faqs = [
+    ['How does the 14-day free trial work?', 'Sign up, connect Stripe, and Revorva starts working immediately — no credit card required. You get full access for 14 days. After the trial ends, choose a plan or your account pauses. All recovery history is saved.'],
+    ['Is my Stripe data secure?', 'Yes. We connect through Stripe\'s official OAuth — no API keys, no stored credentials. We request minimum permissions (read-only where possible), and you can revoke access from your Stripe dashboard at any time.'],
+    ['How is this different from Stripe\'s built-in dunning?', 'Stripe retries on a fixed internal schedule with no customer outreach. Revorva adds bank-cycle-timed retries, AI-personalized emails with your branding, a full recovery dashboard, and per-customer controls.'],
+    ['Can I customize the recovery emails?', 'Yes. Set your business name, logo, brand color, and email tone (Friendly / Professional / Empathetic). On Growth+ plans, emails send from your own domain (billing@yourdomain.com).'],
+    ['How smart is the AI email generation?', 'Each email is personalized with the customer\'s first name, exact amount owed, and your business name. Tone adapts by retry day — Day 0 is warm and helpful, Day 14 is more urgent but never aggressive.'],
+    ['What happens if I cancel?', 'Cancel anytime from billing settings. Active recovery sequences for in-progress failed payments complete. Data is retained 90 days after cancellation.'],
+  ];
+
+  function buildFaq() {
+    const list = document.getElementById('faq-list');
+    if (!list) return;
+    list.innerHTML = '';
+    faqs.forEach(function(pair) {
+      const q = pair[0], a = pair[1];
+      const item = document.createElement('div');
+      item.className = 'faq-item';
+      item.innerHTML =
+        '<button class="faq-q" onclick="toggleFaq(this)">' +
+          '<span>' + q + '</span>' +
+          '<svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>' +
+        '</button>' +
+        '<div class="faq-a"><div class="faq-a-inner">' + a + '</div></div>';
+      list.appendChild(item);
+    });
+  }
+
+  window.toggleFaq = function(btn) {
+    const item = btn.closest('.faq-item');
+    const ans  = item.querySelector('.faq-a');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(function(i) {
+      i.classList.remove('open');
+      i.querySelector('.faq-a').style.maxHeight = '0';
+    });
+    if (!isOpen) {
+      item.classList.add('open');
+      ans.style.maxHeight = ans.scrollHeight + 'px';
+    }
+  };
+
+  // ── Pricing toggle ─────────────────────────────────────────────
+  const prices = {
+    monthly: { starter:29, growth:79,  scale:149 },
+    annual:  { starter:23, growth:63,  scale:119 },
+  };
+  window.setPricing = function(mode) {
+    document.getElementById('toggle-monthly').classList.toggle('active', mode === 'monthly');
+    document.getElementById('toggle-annual').classList.toggle('active',  mode === 'annual');
+    document.getElementById('price-starter').textContent = prices[mode].starter;
+    document.getElementById('price-growth').textContent  = prices[mode].growth;
+    document.getElementById('price-scale').textContent   = prices[mode].scale;
+  };
+
+  // ── Init all ───────────────────────────────────────────────────
   initFeed();
   initCounters();
   initReveal();
@@ -2084,7 +2122,8 @@ document.addEventListener('DOMContentLoaded', () => {
   buildFaq();
   updateEmailPreview();
   updateBrandPreview();
-});
+
+}); // end DOMContentLoaded
 </script>
 </body>
 </html>
