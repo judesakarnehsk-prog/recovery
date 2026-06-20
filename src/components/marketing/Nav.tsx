@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 const navLinks = [
   { href: '#how-it-works', label: 'How it works' },
   { href: '/pricing', label: 'Pricing' },
+  { href: '/blog', label: 'Blog' },
 ]
 
 export function Nav() {

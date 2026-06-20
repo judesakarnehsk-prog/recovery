@@ -64,7 +64,7 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.35 }}
               className="text-lg text-muted leading-relaxed max-w-md mb-8"
             >
-              Failed payments silently kill 4–9% of your MRR every month. Revorva connects to Stripe in 2 minutes and automatically recovers up to 70% of them — with AI-personalized emails and smart retries.
+              Failed payments silently kill 4–9% of your MRR every month. Revorva recovers up to 70% of them automatically — turning lost revenue into recovered MRR while you focus on building.
             </motion.p>
 
             <motion.div
@@ -113,9 +113,14 @@ export function Hero() {
                   <p className="text-xs text-muted uppercase tracking-wider mb-1">Revenue Recovered This Month</p>
                   <p className="text-4xl font-bold text-ink">$4,280</p>
                 </div>
-                <span className="text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-2.5 py-1">
-                  +23% vs last month
-                </span>
+                <div className="flex flex-col items-end gap-1.5">
+                  <span className="text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-2.5 py-1">
+                    +23% vs last month
+                  </span>
+                  <span className="text-[10px] text-muted/50 font-medium uppercase tracking-wide">
+                    Example data
+                  </span>
+                </div>
               </div>
 
               {/* Mini chart */}

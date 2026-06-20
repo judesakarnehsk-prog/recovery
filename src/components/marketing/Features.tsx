@@ -4,20 +4,34 @@ import { motion } from 'framer-motion'
 
 const features = [
   {
-    title: 'AI-Personalized Emails',
-    body: "Every recovery email is written by AI using your customer's name, the exact amount owed, and your business name. Feels human, converts better.",
+    title: 'Higher recovery rates',
+    body: 'Recover up to 70% of failed payments vs Stripe\'s basic retries that recover 30–40%. That gap is revenue that compounds every month.',
+    outcome: true,
+  },
+  {
+    title: 'Lower involuntary churn',
+    body: 'Stop losing customers who never meant to leave. Most failed payments are recoverable — they just need a timely, personal email.',
+    outcome: true,
+  },
+  {
+    title: 'More recovered MRR every month',
+    body: 'Every recovered payment is MRR you keep. It compounds month over month and never shows up as churn in your metrics.',
+    outcome: true,
   },
   {
     title: 'Smart Retry Schedule',
     body: 'We retry payments on Day 0, 3, 7, and 14 — timed to when banks are most likely to approve. Not the same time every day like Stripe does.',
+    outcome: false,
   },
   {
-    title: 'One-Click Stripe Connect',
+    title: 'Personalized recovery emails',
+    body: "Every recovery email uses your customer's name, the exact amount owed, and your business name. Feels human, converts better.",
+    outcome: false,
+  },
+  {
+    title: 'One-click Stripe Connect',
     body: 'No API keys to copy. No webhooks to configure. Just click Connect and we handle the rest via Stripe OAuth.',
-  },
-  {
-    title: 'Custom Email Domain (Scale)',
-    body: 'Send recovery emails from billing@yourcompany.com instead of billing@revorva.com. Add 2 DNS records and you\'re done.',
+    outcome: false,
   },
 ]
 
@@ -34,8 +48,8 @@ export function Features() {
           <h2 className="font-display text-4xl lg:text-5xl text-ink">Everything you need. Nothing you don't.</h2>
         </motion.div>
 
-        {/* 2×2 feature grid */}
-        <div className="grid sm:grid-cols-2 gap-4 mb-4">
+        {/* 3×2 feature grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           {features.map((feature, i) => (
             <motion.div
               key={feature.title}
@@ -45,6 +59,11 @@ export function Features() {
               transition={{ duration: 0.5, delay: i * 0.08 }}
               className="bg-white border border-border rounded-2xl p-6"
             >
+              {feature.outcome && (
+                <span className="inline-block text-[10px] font-semibold uppercase tracking-widest text-accent mb-3">
+                  Outcome
+                </span>
+              )}
               <h3 className="text-base font-semibold text-ink mb-2">{feature.title}</h3>
               <p className="text-sm text-muted leading-relaxed">{feature.body}</p>
             </motion.div>

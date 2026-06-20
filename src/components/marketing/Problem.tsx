@@ -1,13 +1,65 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const stats = [
-  { value: '$1,000+', label: 'Average monthly loss for a $20k MRR business' },
-  { value: '4–9%', label: 'Of payments fail every month' },
-  { value: '70%', label: 'Of failed payments are recoverable' },
-  { value: '2 min', label: 'Time to set up Revorva' },
+  {
+    value: '$1,000+',
+    label: 'Average monthly loss for a $20k MRR business',
+    source: 'Calculated from industry-wide failure rates',
+  },
+  {
+    value: '4–9%',
+    label: 'Of payments fail every month',
+    source: 'Recurly, 2024 SaaS Payment Recovery Report',
+  },
+  {
+    value: '70%',
+    label: 'Of failed payments are recoverable',
+    source: 'Stripe Subscription Best Practices, 2023',
+  },
+  {
+    value: '2 min',
+    label: 'Time to set up Revorva',
+    source: null,
+  },
 ]
+
+function DunningTerm() {
+  const [visible, setVisible] = useState(false)
+  return (
+    <span className="relative inline-block">
+      <button
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onFocus={() => setVisible(true)}
+        onBlur={() => setVisible(false)}
+        onClick={() => setVisible((v) => !v)}
+        className="border-b border-dashed border-muted/50 text-inherit cursor-help focus:outline-none"
+        aria-describedby="dunning-tooltip"
+      >
+        dunning
+      </button>
+      <AnimatePresence>
+        {visible && (
+          <motion.div
+            id="dunning-tooltip"
+            role="tooltip"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.15 }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 w-64 bg-ink text-white text-xs leading-relaxed rounded-lg px-3 py-2 shadow-elevated pointer-events-none"
+          >
+            <strong>Dunning</strong> = the process of recovering failed payments through retries and customer outreach.
+            <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-ink" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </span>
+  )
+}
 
 export function Problem() {
   return (
@@ -29,7 +81,7 @@ export function Problem() {
               When a customer's card fails, most businesses either retry blindly or do nothing. The customer churns without ever meaning to. You lose revenue without a single cancellation.
             </p>
             <p className="text-muted leading-relaxed">
-              Stripe's built-in dunning is basic. It doesn't send smart emails, doesn't personalize outreach, and doesn't show you what you're losing.
+              Stripe&apos;s built-in <DunningTerm /> is basic. It doesn&apos;t send smart emails, doesn&apos;t personalize outreach, and doesn&apos;t show you what you&apos;re losing.
             </p>
           </motion.div>
 
@@ -46,6 +98,11 @@ export function Problem() {
               >
                 <p className="text-3xl font-bold text-ink mb-1.5">{stat.value}</p>
                 <p className="text-sm text-muted leading-snug">{stat.label}</p>
+                {stat.source && (
+                  <p className="text-[11px] italic mt-2 leading-snug" style={{ color: '#6B7280' }}>
+                    Source: {stat.source}
+                  </p>
+                )}
               </motion.div>
             ))}
           </div>

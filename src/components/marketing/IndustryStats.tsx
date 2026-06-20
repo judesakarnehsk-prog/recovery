@@ -6,14 +6,17 @@ const stats = [
   {
     value: '4–9%',
     label: 'of subscription payments fail every month',
+    source: 'Recurly, 2024 SaaS Payment Recovery Report',
   },
   {
     value: '70%',
     label: 'of failed payments are recoverable',
+    source: 'Stripe Subscription Best Practices, 2023',
   },
   {
     value: '$1,200+',
     label: 'average monthly loss at $20k MRR',
+    source: 'Calculated from industry-wide failure rates',
   },
 ]
 
@@ -42,19 +45,13 @@ export function IndustryStats() {
             >
               <p className="font-display text-5xl text-accent mb-3">{stat.value}</p>
               <p className="text-sm text-muted leading-snug">{stat.label}</p>
+              <p className="text-[11px] italic mt-2 leading-snug" style={{ color: '#6B7280' }}>
+                Source: {stat.source}
+              </p>
             </motion.div>
           ))}
         </div>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="text-center text-xs text-muted"
-        >
-          Industry data from Stripe and payment processors
-        </motion.p>
       </div>
     </section>
   )

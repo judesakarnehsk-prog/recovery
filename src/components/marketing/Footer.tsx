@@ -26,7 +26,7 @@ export function Footer() {
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         {/* Main footer content */}
-        <div className="py-14 grid grid-cols-2 md:grid-cols-4 gap-10">
+        <div className="py-14 grid grid-cols-2 md:grid-cols-5 gap-10">
           {/* Brand col */}
           <div className="col-span-2 md:col-span-1">
             <span className="text-base font-bold text-ink font-sans block mb-3">
@@ -62,9 +62,28 @@ export function Footer() {
               {[
                 { label: 'About', href: '/about' },
                 { label: 'Contact', href: '/contact' },
+                { label: 'Security', href: '/security' },
                 { label: 'Privacy Policy', href: '/privacy' },
                 { label: 'Terms of Service', href: '/terms' },
                 { label: 'Refund Policy', href: '/refund' },
+              ].map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="text-sm text-muted hover:text-ink transition-colors duration-150">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Resources */}
+          <div>
+            <h3 className="text-xs font-semibold text-ink uppercase tracking-widest mb-4">Resources</h3>
+            <ul className="space-y-2.5">
+              {[
+                { label: 'Blog', href: '/blog' },
+                { label: 'Free Tools', href: '/tools' },
+                { label: 'Help & Docs', href: '/help' },
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="text-sm text-muted hover:text-ink transition-colors duration-150">
@@ -93,11 +112,6 @@ export function Footer() {
                   167–169 Great Portland St<br />
                   London, W1W 5PF, UK
                 </address>
-              </li>
-              <li>
-                <Link href="/help" className="text-sm text-muted hover:text-ink transition-colors duration-150">
-                  Help &amp; Docs
-                </Link>
               </li>
             </ul>
           </div>

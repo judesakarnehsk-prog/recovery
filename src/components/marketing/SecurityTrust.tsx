@@ -1,7 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Shield, CreditCard, Lock, Building2 } from 'lucide-react'
+import { Shield, CreditCard, Lock, Building2, ArrowRight } from 'lucide-react'
 
 const cards = [
   {
@@ -36,7 +37,14 @@ export function SecurityTrust() {
           viewport={{ once: true }}
           className="text-center mb-14"
         >
-          <h2 className="font-display text-4xl lg:text-5xl text-ink">Your data is completely safe</h2>
+          <h2 className="font-display text-4xl lg:text-5xl text-ink mb-3">Your data is completely safe</h2>
+          <Link
+            href="/security"
+            className="inline-flex items-center gap-1 text-sm text-accent hover:underline mt-2"
+          >
+            Learn more about our security
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </motion.div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">

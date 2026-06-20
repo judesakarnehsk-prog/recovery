@@ -1,23 +1,23 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Plug, Zap, TrendingUp } from 'lucide-react'
 
 const steps = [
   {
-    emoji: '🔗',
+    icon: Plug,
     number: '01',
     title: 'Connect Stripe',
     body: 'Click connect, authorize Revorva in Stripe. That\'s the entire setup. We instantly start listening for failed payments on your account.',
   },
   {
-    emoji: '⚡',
+    icon: Zap,
     number: '02',
     title: 'We handle everything',
     body: 'When a payment fails, Revorva automatically sends a personalized recovery email to your customer and schedules smart payment retries over 14 days.',
   },
   {
-    emoji: '📈',
+    icon: TrendingUp,
     number: '03',
     title: 'Watch revenue recover',
     body: 'See exactly how much revenue was recovered, which customers paid, and what\'s still pending — all in a clean, simple dashboard.',
@@ -50,7 +50,9 @@ export function HowItWorks() {
                 transition={{ duration: 0.5, delay: i * 0.15 }}
                 className="bg-white border border-border rounded-2xl p-6 flex-1"
               >
-                <div className="text-3xl mb-4">{step.emoji}</div>
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-card" style={{ backgroundColor: '#C94A1F' }}>
+                  <step.icon className="w-8 h-8 text-white" />
+                </div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-widest mb-2">{step.number}</p>
                 <h3 className="text-lg font-semibold text-ink mb-3">{step.title}</h3>
                 <p className="text-sm text-muted leading-relaxed">{step.body}</p>
