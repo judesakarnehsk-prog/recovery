@@ -1151,8 +1151,7 @@ document.addEventListener('DOMContentLoaded',function(){
     feedList.insertBefore(item,feedList.firstChild);
     while(feedList.children.length>5){
       var last=feedList.lastChild;
-      last.style.transition='opacity 0.3s ease';last.style.opacity='0';
-      setTimeout(function(l){l.remove();}(last),300);
+      if(last){last.remove();}
     }
   }
   for(var fi=0;fi<4;fi++){(function(delay){setTimeout(addFeedItem,delay);})(fi*150);}
@@ -1189,9 +1188,9 @@ document.addEventListener('DOMContentLoaded',function(){
       var elapsed=(Date.now()-_pageOpenTime)/1000;
       lossEl.textContent='$'+(getLossPerSecond(_currentMRR)*elapsed).toFixed(2);
     }
-    _lossRAF=requestAnimationFrame(tickLoss);
+    requestAnimationFrame(tickLoss);
   }
-  tickLoss();
+  requestAnimationFrame(tickLoss);
   function animNum(elId,target,prefix,suffix){
     var el=document.getElementById(elId);
     if(!el)return;
