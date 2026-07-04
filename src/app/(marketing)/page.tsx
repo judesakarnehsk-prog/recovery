@@ -3,7 +3,6 @@ import { Problem } from '@/components/marketing/Problem'
 import { MrrCalculator } from '@/components/marketing/MrrCalculator'
 import { HowItWorks } from '@/components/marketing/HowItWorks'
 import { ProductDemo } from '@/components/marketing/ProductDemo'
-import { WhatHappensNext } from '@/components/marketing/WhatHappensNext'
 import { Features } from '@/components/marketing/Features'
 import { EmailDemo } from '@/components/marketing/EmailDemo'
 import { ComparisonTable } from '@/components/marketing/ComparisonTable'
@@ -23,7 +22,6 @@ export default function HomePage() {
       <MrrCalculator />
       <HowItWorks />
       <ProductDemo />
-      <WhatHappensNext />
       <Features />
       <EmailDemo />
       <ComparisonTable />

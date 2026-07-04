@@ -1,5 +1,4 @@
 import { DollarSign, TrendingUp, Mail, Clock } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 interface Stats {
   total_recovered_amount: number
@@ -20,39 +19,107 @@ export function StatsCards({ stats }: { stats: Stats | null }) {
       label: 'Recovered This Month',
       value: stats ? formatCurrency(stats.total_recovered_amount) : '$0',
       icon: DollarSign,
-      accent: true,
+      iconBg: 'var(--accent-dim, rgba(201,74,31,0.10))',
+      iconColor: '#C94A1F',
+      trend: stats?.total_recovered_amount ? null : 'No recoveries yet',
+      trendType: 'neutral' as const,
     },
     {
       label: 'Recovery Rate',
       value: stats ? `${Math.round(stats.recovery_rate)}%` : '0%',
       icon: TrendingUp,
-      accent: false,
+      iconBg: 'var(--blue-dim, rgba(96,165,250,0.10))',
+      iconColor: 'var(--blue, #60A5FA)',
+      trend: stats?.total_recoveries ? `${stats.total_recoveries} emails sent` : 'Emails sent: 0',
+      trendType: 'neutral' as const,
     },
     {
       label: 'Emails Sent',
       value: stats ? String(stats.total_recoveries) : '0',
       icon: Mail,
-      accent: false,
+      iconBg: 'var(--green-dim, rgba(34,197,94,0.10))',
+      iconColor: 'var(--green, #22C55E)',
+      trend: stats?.total_recoveries ? 'Active sequences running' : 'Waiting for failures',
+      trendType: (stats?.total_recoveries ? 'up' : 'neutral') as 'up' | 'down' | 'neutral',
     },
     {
       label: 'Pending Recovery',
       value: stats ? String(stats.pending_count) : '0',
       icon: Clock,
-      accent: false,
+      iconBg: 'var(--accent-dim, rgba(201,74,31,0.10))',
+      iconColor: '#C94A1F',
+      trend: 'Awaiting next retry',
+      trendType: 'neutral' as const,
     },
   ]
 
+  const trendColor: Record<string, string> = {
+    up: 'var(--green, #22C55E)',
+    down: 'var(--red, #EF4444)',
+    neutral: 'var(--text-3, #444)',
+  }
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div
+      className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      style={{ padding: '0 32px', marginBottom: 24 }}
+    >
       {cards.map((card) => (
-        <div key={card.label} className="bg-white border border-border rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-muted font-medium">{card.label}</p>
-            <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', card.accent ? 'bg-accent-light' : 'bg-cream')}>
-              <card.icon className={cn('w-4 h-4', card.accent ? 'text-accent' : 'text-muted')} />
+        <div
+          key={card.label}
+          className="rounded-xl transition-all duration-200"
+          style={{
+            background: 'var(--surface, #111)',
+            border: '1px solid var(--border, #1E1E1E)',
+            padding: 20,
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLDivElement
+            el.style.borderColor = 'var(--border-mid, #282828)'
+            el.style.transform = 'translateY(-2px)'
+            el.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)'
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLDivElement
+            el.style.borderColor = 'var(--border, #1E1E1E)'
+            el.style.transform = 'translateY(0)'
+            el.style.boxShadow = 'none'
+          }}
+        >
+          <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
+            <span style={{
+              fontSize: 11, fontWeight: 500,
+              color: 'var(--text-3, #444)',
+              textTransform: 'uppercase', letterSpacing: '0.05em',
+            }}>
+              {card.label}
+            </span>
+            <div
+              className="flex items-center justify-center rounded-lg"
+              style={{ width: 32, height: 32, background: card.iconBg, color: card.iconColor }}
+            >
+              <card.icon style={{ width: 15, height: 15 }} />
             </div>
           </div>
-          <p className={cn('text-2xl font-bold', card.accent ? 'text-accent' : 'text-ink')}>{card.value}</p>
+
+          <div style={{
+            fontFamily: 'var(--font-jetbrains-mono), "Courier New", monospace',
+            fontSize: 30, fontWeight: 500,
+            color: 'var(--text-1, #F2F2F2)',
+            letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 10,
+          }}>
+            {card.value}
+          </div>
+
+          <div className="flex items-center gap-1" style={{ fontSize: 12, color: trendColor[card.trendType] }}>
+            {card.trendType === 'up' && (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
+              </svg>
+            )}
+            {card.trendType === 'down' && <span style={{ fontSize: 11 }}>↓</span>}
+            <span>{card.trend}</span>
+          </div>
         </div>
       ))}
     </div>

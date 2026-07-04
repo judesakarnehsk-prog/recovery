@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from 'next'
 export const viewport: Viewport = {
   themeColor: '#C94A1F',
 }
-import { Instrument_Serif, DM_Sans } from 'next/font/google'
+import { Instrument_Serif, DM_Sans, Sora, JetBrains_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react'
 import { CookieBanner } from '@/components/CookieBanner'
 import './globals.css'
@@ -20,6 +20,20 @@ const dmSans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-dm-sans',
   weight: ['400', '500', '600', '700'],
+  display: 'swap',
+})
+
+const sora = Sora({
+  subsets: ['latin'],
+  variable: '--font-sora',
+  weight: ['600', '700', '800'],
+  display: 'swap',
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
+  weight: ['400', '500'],
   display: 'swap',
 })
 
@@ -82,7 +96,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${instrumentSerif.variable} ${dmSans.variable}`}>
+    <html lang="en" className={`${instrumentSerif.variable} ${dmSans.variable} ${sora.variable} ${jetbrainsMono.variable}`}>
       <body className="font-sans antialiased bg-paper text-ink">
         {children}
         <CookieBanner />

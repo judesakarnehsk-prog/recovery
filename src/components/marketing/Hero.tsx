@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { trackEvent } from '@/lib/analytics'
+import { HeroParticles } from '@/components/marketing/HeroParticles'
 
 const activityFeed = [
   { type: 'check', bg: 'bg-green-50', text: 'Payment recovered', amount: '$149', cardClass: 'hero-card-1', checkDelay: '1000ms' },
@@ -28,12 +29,14 @@ const trustItems = [
 export function Hero() {
   return (
     <section className="relative min-h-[90vh] flex items-center pt-16 overflow-hidden">
+      {/* Particle canvas */}
+      <HeroParticles />
       {/* Grid texture */}
-      <div className="absolute inset-0 paper-grid" />
+      <div className="absolute inset-0 paper-grid" style={{ zIndex: 1 }} />
       {/* Radial fade from accent */}
-      <div className="absolute inset-0 bg-hero-gradient" />
+      <div className="absolute inset-0 bg-hero-gradient" style={{ zIndex: 1 }} />
 
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-20 lg:py-28 w-full">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-20 lg:py-28 w-full" style={{ zIndex: 2 }}>
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left copy */}
           <div>

@@ -10,7 +10,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect('/login')
   }
 
-  // Fetch user profile for display name / email
   const { data: profile } = await supabase
     .from('users')
     .select('full_name, email, company_name, avatar_url')
@@ -18,9 +17,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .single()
 
   return (
-    <div className="flex h-screen overflow-hidden bg-paper">
+    <div style={{ background: 'var(--bg, #080808)', minHeight: '100vh', fontFamily: 'var(--font-dm-sans), system-ui, sans-serif' }}>
       <Sidebar userEmail={profile?.email ?? user.email} avatarUrl={profile?.avatar_url ?? undefined} />
-      <main className="flex-1 overflow-y-auto">
+      <main style={{ marginLeft: 220, minHeight: '100vh', background: 'var(--bg, #080808)', paddingTop: 32 }}>
         {children}
       </main>
     </div>

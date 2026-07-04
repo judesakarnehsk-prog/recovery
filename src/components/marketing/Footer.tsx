@@ -29,7 +29,8 @@ export function Footer() {
         <div className="py-14 grid grid-cols-2 md:grid-cols-5 gap-10">
           {/* Brand col */}
           <div className="col-span-2 md:col-span-1">
-            <span className="text-base font-bold text-ink font-sans block mb-3">
+            <span className="text-base font-bold text-ink font-sans flex items-center gap-1.5 mb-3">
+              <span className="text-accent text-sm">✦</span>
               Revorva<span className="text-accent">.</span>
             </span>
             <p className="text-sm text-muted leading-relaxed max-w-xs">

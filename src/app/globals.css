@@ -2,6 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dashboard design tokens */
+:root {
+  --accent:        #C94A1F;
+  --accent-hover:  #D95A2F;
+  --accent-dim:    rgba(201,74,31,0.10);
+  --accent-glow:   rgba(201,74,31,0.15);
+  --accent-border: rgba(201,74,31,0.20);
+
+  --bg:            #080808;
+  --surface:       #111111;
+  --surface-2:     #161616;
+  --surface-3:     #1C1C1C;
+  --border:        #1E1E1E;
+  --border-mid:    #282828;
+  --border-bright: #333333;
+  --text-1:        #F2F2F2;
+  --text-2:        #888888;
+  --text-3:        #444444;
+
+  --green:         #22C55E;
+  --green-dim:     rgba(34,197,94,0.10);
+  --green-border:  rgba(34,197,94,0.20);
+  --red:           #EF4444;
+  --red-dim:       rgba(239,68,68,0.10);
+  --red-border:    rgba(239,68,68,0.20);
+  --blue:          #60A5FA;
+  --blue-dim:      rgba(96,165,250,0.10);
+  --blue-border:   rgba(96,165,250,0.20);
+  --amber:         #F59E0B;
+  --amber-dim:     rgba(245,158,11,0.10);
+}
+
+[data-theme="light"] {
+  --bg:            #F7F5F2;
+  --surface:       #FFFFFF;
+  --surface-2:     #F2F0ED;
+  --surface-3:     #ECEAE7;
+  --border:        #E5E3E0;
+  --border-mid:    #D8D6D3;
+  --border-bright: #C8C6C3;
+  --text-1:        #111111;
+  --text-2:        #555555;
+  --text-3:        #999999;
+}
+
 /* Legacy color token shims — map old purple/blue tokens to new warm palette */
 /* These allow old pages to continue rendering without full rewrites */
 :root {
@@ -157,6 +202,34 @@
 
 .animate-stat-pop {
   animation: stat-pop 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Nav bar — opacity/blur transition only, no layout changes */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  box-shadow: none;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition:
+    background 0.4s ease,
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    backdrop-filter 0.4s ease,
+    -webkit-backdrop-filter 0.4s ease;
+}
+
+.nav-bar.scrolled {
+  background: rgba(13, 13, 13, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
 }
 
 .timeline-line {
