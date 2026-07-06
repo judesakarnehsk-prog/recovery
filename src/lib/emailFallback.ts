@@ -11,6 +11,7 @@ interface FallbackEmailParams {
   brandColor: string    // hex e.g. "#c8401a"
   logoUrl?: string
   paymentUrl: string
+  businessCategory?: string
 }
 
 interface FallbackEmailResult {
@@ -22,34 +23,51 @@ const TONE = {
   1: {
     subject: (biz: string) => `Quick heads up about your ${biz} payment`,
     greeting: (name: string) => `Hi ${name || 'there'},`,
-    body: (amount: string, biz: string) =>
+    body: (amount: string, biz: string, context: string) =>
       `No worries at all — these things happen. We just wanted to let you know that your recent payment of <strong>${amount}</strong> for ${biz} didn't go through. It only takes a moment to update your details and you'll be all set.`,
     cta: 'Update my payment method',
-    closing: `No rush, but the sooner the better so there's no interruption to your account.`,
+    closing: (context: string) => `No rush, but the sooner the better so there's no interruption to ${context}.`,
   },
   2: {
     subject: (biz: string) => `Reminder: Your ${biz} payment needs attention`,
     greeting: (name: string) => `Hi ${name || 'there'},`,
-    body: (amount: string, biz: string) =>
-      `We're following up on your payment of <strong>${amount}</strong> for ${biz} which still hasn't gone through. We'd love to keep your account active — please take a moment to update your payment details.`,
+    body: (amount: string, biz: string, context: string) =>
+      `We're following up on your payment of <strong>${amount}</strong> for ${biz} which still hasn't gone through. We'd love to keep ${context} active — please take a moment to update your payment details.`,
     cta: 'Update payment details',
-    closing: `If you have any questions or need help, just reply to this email — we're happy to assist.`,
+    closing: (_context: string) => `If you have any questions or need help, just reply to this email — we're happy to assist.`,
   },
   3: {
     subject: (biz: string) => `Final notice: Action required for your ${biz} account`,
     greeting: (name: string) => `Hi ${name || 'there'},`,
-    body: (amount: string, biz: string) =>
-      `This is our final notice regarding your outstanding payment of <strong>${amount}</strong> for ${biz}. To avoid your account being suspended, please update your payment method as soon as possible. We truly want to keep you as a customer.`,
+    body: (amount: string, biz: string, context: string) =>
+      `This is our final notice regarding your outstanding payment of <strong>${amount}</strong> for ${biz}. To avoid losing access to ${context}, please update your payment method as soon as possible. We truly want to keep you as a customer.`,
     cta: 'Resolve my payment now',
-    closing: `If there's anything we can do to help, please don't hesitate to reach out by replying to this email.`,
+    closing: (_context: string) => `If there's anything we can do to help, please don't hesitate to reach out by replying to this email.`,
   },
 }
 
+// Returns a context-aware phrase describing what the customer stands to lose
+function accountContextPhrase(category?: string): string {
+  const cat = (category || '').toLowerCase()
+  if (cat.includes('ecommerce') || cat.includes('e-commerce') || cat.includes('shop')) {
+    return 'your account and order history'
+  }
+  if (cat.includes('newsletter') || cat.includes('media')) {
+    return 'your subscription and content access'
+  }
+  if (cat.includes('community') || cat.includes('membership')) {
+    return 'your membership and community access'
+  }
+  // Default: SaaS / software / other
+  return 'your subscription and feature access'
+}
+
 export function buildFallbackEmail(params: FallbackEmailParams): FallbackEmailResult {
-  const { attemptNumber, customerName, businessName, amount, brandColor, logoUrl, paymentUrl } = params
+  const { attemptNumber, customerName, businessName, amount, brandColor, logoUrl, paymentUrl, businessCategory } = params
   const tone = TONE[attemptNumber]
   const color = brandColor || '#c8401a'
   const firstName = customerName?.split(' ')[0] || 'there'
+  const accountContext = accountContextPhrase(businessCategory)
 
   const subject = tone.subject(businessName)
 
@@ -118,7 +136,7 @@ export function buildFallbackEmail(params: FallbackEmailParams): FallbackEmailRe
             <td style="padding:28px 40px 0 40px;font-family:Arial,Helvetica,sans-serif;font-size:15px;
                        line-height:1.6;color:#0f0e0c;">
               <p style="margin:0 0 16px 0;">${tone.greeting(firstName)}</p>
-              <p style="margin:0 0 24px 0;color:#3d3a35;">${tone.body(amount, businessName)}</p>
+              <p style="margin:0 0 24px 0;color:#3d3a35;">${tone.body(amount, businessName, accountContext)}</p>
             </td>
           </tr>
 
@@ -151,7 +169,7 @@ export function buildFallbackEmail(params: FallbackEmailParams): FallbackEmailRe
           <tr>
             <td style="padding:0 40px 28px 40px;font-family:Arial,Helvetica,sans-serif;font-size:13px;
                        line-height:1.6;color:#7a756c;">
-              <p style="margin:0 0 16px 0;">${tone.closing}</p>
+              <p style="margin:0 0 16px 0;">${tone.closing(accountContext)}</p>
               <p style="margin:0;">— The ${businessName} team</p>
             </td>
           </tr>

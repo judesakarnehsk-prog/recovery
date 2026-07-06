@@ -330,3 +330,51 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #c8c4bc;
 }
+
+/* ─── Auth pages — Google OAuth button + divider ─── */
+
+.google-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px 16px;
+  background: white;
+  border: 1px solid #e2e0db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1917;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 16px;
+}
+.google-btn:hover {
+  background: #faf9f7;
+  border-color: #c8c5be;
+}
+.google-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: #9c9790;
+  font-size: 13px;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e0db;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

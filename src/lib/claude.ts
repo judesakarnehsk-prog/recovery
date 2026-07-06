@@ -37,7 +37,7 @@ const TONE_PROMPTS: Record<string, Record<number, string>> = {
 export async function generateRecoveryEmail(
   params: DunningEmailParams
 ): Promise<DunningEmailResult> {
-  const { customerName, businessName, amount, currency, attemptNumber, billingPortalUrl, brandColor, logoUrl, dunningTone, subjectPrefix } = params
+  const { customerName, businessName, amount, currency, attemptNumber, billingPortalUrl, brandColor, logoUrl, dunningTone, subjectPrefix, businessCategory, companyUrl } = params
 
   const firstName = sanitizeCustomerName(customerName)
   const color = brandColor || '#c8401a'
@@ -56,26 +56,43 @@ export async function generateRecoveryEmail(
     currency: currencyUpper,
   }).format(amount / divisor)
 
-  console.log('[claude] generateRecoveryEmail vars:', { firstName, businessName, color, logoUrl: logoUrl || null, attemptNumber, toneKey, subjectPrefix: subjectPrefix || null })
+  const categoryLabel = businessCategory || 'SaaS'
 
-  const prompt = `You are a billing assistant writing recovery emails for a SaaS business.
-Write professional, warm, non-aggressive emails. The customer has not done anything wrong — their payment simply failed. Make it easy for them to update their payment method. Keep it short. Never mention "dunning" or "collection".
+  console.log('[claude] generateRecoveryEmail vars:', { firstName, businessName, color, logoUrl: logoUrl || null, attemptNumber, toneKey, subjectPrefix: subjectPrefix || null, businessCategory: categoryLabel, companyUrl: companyUrl || null })
 
-Write a ${tone} recovery email (attempt ${attemptNumber} of 3).
+  const prompt = `You are a billing assistant writing recovery emails for a ${categoryLabel} business called ${businessName}.${companyUrl ? ` Their website is ${companyUrl}.` : ''}
 
-Business: ${businessName}
+Write professional, warm, non-aggressive emails. The customer has not done anything wrong — their payment simply failed. Make it easy for them to update their payment method. Never mention "dunning" or "collection".
+
+Write a ${tone} recovery email (attempt ${attemptNumber} of 3) that feels appropriate for a ${categoryLabel} business — match the industry tone and context. For example:
+- SaaS/Software: mention subscription continuity, feature access
+- E-commerce: mention order history, account access
+- Newsletter/Media: mention content access, membership benefits
+- Community/Membership: mention community access, belonging
+
+Business: ${businessName}${companyUrl ? `\nWebsite: ${companyUrl}` : ''}${businessCategory ? `\nIndustry: ${businessCategory}` : ''}
 Customer first name: ${firstName}
 Amount: ${amountFormatted}
 Update payment URL: ${billingPortalUrl}
+Tone: ${tone}
+Attempt: ${attemptNumber} of 3
 
-Return ONLY valid JSON:
+Rules:
+- Never mention competitors
+- Never be aggressive or threatening
+- Keep subject lines under 60 characters
+- The email body should be 3-4 short paragraphs max
+- Always include the payment update URL as a CTA button
+- Use the brand color ${color} for the CTA button
+- Sign off naturally — don't use generic phrases like 'Best regards, The Team'
+
+Return ONLY valid JSON with no markdown, no backticks:
 {"subject": "...", "html": "...", "text": "..."}
 
 The HTML should be minimal, clean, readable in email clients. Use inline styles.
 Colors: text #0f0e0c, background #ffffff, button background ${color}, button text #ffffff.
 The "Update payment" button should be a prominent anchor tag styled as a button using background-color:${color}.
-${logoUrl ? `Include this logo at the top: <img src="${logoUrl}" alt="${businessName}" style="height:32px;width:auto;display:block;margin-bottom:16px;" />` : ''}
-Keep the email under 120 words. Sign off as "The ${businessName} team".`
+${logoUrl ? `Include this logo at the top: <img src="${logoUrl}" alt="${businessName}" style="height:32px;width:auto;display:block;margin-bottom:16px;" />` : ''}`
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',

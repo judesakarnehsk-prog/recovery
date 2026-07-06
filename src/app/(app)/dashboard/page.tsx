@@ -12,6 +12,7 @@ import { SetupChecklist } from '@/components/dashboard/SetupChecklist'
 import { TrialBanner } from '@/components/dashboard/TrialBanner'
 import { RecoveryChart, type ChartEntry } from '@/components/dashboard/RecoveryChart'
 import { QuickActions } from '@/components/dashboard/QuickActions'
+import { BusinessAnalysis } from './_components/BusinessAnalysis'
 
 type Period = '7d' | '30d' | 'all'
 
@@ -69,6 +70,9 @@ export default function DashboardPage() {
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null)
   const [userCreatedAt, setUserCreatedAt] = useState<string | null>(null)
   const [period, setPeriod] = useState<Period>('30d')
+  const [missingBusinessName, setMissingBusinessName] = useState(false)
+  const [businessNameInput, setBusinessNameInput] = useState('')
+  const [savingBusinessName, setSavingBusinessName] = useState(false)
 
   const setupStatus = useSetupStatus()
 
@@ -92,7 +96,12 @@ export default function DashboardPage() {
     ])
 
     const profile = profileRes.data
-    setUserName(profile?.company_name || profile?.full_name || user.email?.split('@')[0] || 'there')
+    const emailFallback = user.email?.split('@')[0] || 'there'
+    setUserName(profile?.company_name || profile?.full_name || emailFallback)
+    // Google OAuth users won't have a business name — prompt them to add one
+    if (!profile?.company_name && !profile?.full_name) {
+      setMissingBusinessName(true)
+    }
     setUserPlan(profile?.plan ?? 'trial')
     setTrialEndsAt(profile?.trial_ends_at ?? null)
     setUserCreatedAt(profile?.created_at ?? user.created_at ?? null)
@@ -131,6 +140,19 @@ export default function DashboardPage() {
   const dismissChecklist = () => {
     localStorage.setItem('setup_checklist_dismissed', 'true')
     setChecklistDismissed(true)
+  }
+
+  const saveBusinessName = async () => {
+    if (!businessNameInput.trim()) return
+    setSavingBusinessName(true)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      await supabase.from('users').update({ company_name: businessNameInput.trim() }).eq('id', user.id)
+      setUserName(businessNameInput.trim())
+      setMissingBusinessName(false)
+    }
+    setSavingBusinessName(false)
   }
 
   const handleResume = async () => {
@@ -304,6 +326,59 @@ export default function DashboardPage() {
 
       {/* Trial banner */}
       {userPlan === 'trial' && <div style={{ margin: '0 32px 20px' }}><TrialBanner trialEndsAt={trialEndsAt} /></div>}
+
+      {/* Business name prompt for Google OAuth users */}
+      {missingBusinessName && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          margin: '0 32px 20px',
+          background: 'var(--accent-dim)', border: '1px solid var(--accent-border)',
+          borderRadius: 12, padding: '14px 18px',
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-1)', margin: 0, flexShrink: 0 }}>
+            What&apos;s your business name?
+          </p>
+          <input
+            type="text"
+            value={businessNameInput}
+            onChange={(e) => setBusinessNameInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') saveBusinessName() }}
+            placeholder="Acme Inc."
+            style={{
+              flex: 1, padding: '8px 12px',
+              background: 'var(--surface)', border: '1px solid var(--border-mid)',
+              borderRadius: 7, fontSize: 13, color: 'var(--text-1)',
+              outline: 'none', fontFamily: 'inherit',
+              minWidth: 0,
+            }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-mid)' }}
+          />
+          <button
+            onClick={saveBusinessName}
+            disabled={savingBusinessName || !businessNameInput.trim()}
+            style={{
+              flexShrink: 0, padding: '8px 16px',
+              background: 'var(--accent)', color: '#fff',
+              border: 'none', borderRadius: 7,
+              fontSize: 13, fontWeight: 600,
+              cursor: savingBusinessName || !businessNameInput.trim() ? 'not-allowed' : 'pointer',
+              opacity: !businessNameInput.trim() ? 0.5 : 1,
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={(e) => { if (businessNameInput.trim()) e.currentTarget.style.opacity = '0.85' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = businessNameInput.trim() ? '1' : '0.5' }}
+          >
+            {savingBusinessName ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      )}
+
+      {/* Business analysis CTA */}
+      <BusinessAnalysis />
 
       {/* Setup checklist (new version) */}
       <SetupChecklist />

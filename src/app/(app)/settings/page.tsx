@@ -2,10 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, CheckCircle2, Loader2, Copy, Trash2, Plus, RefreshCw, Link2, X, Lock, PauseCircle, PlayCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { createClient } from '@/lib/supabase/client'
 import { trackEvent } from '@/lib/analytics'
 
@@ -35,16 +31,69 @@ interface StripeAccount {
   config_json: any
 }
 
+// ── Shared styles ────────────────────────────────────────────────────────────
+
+const card: React.CSSProperties = {
+  background: 'var(--surface)', border: '1px solid var(--border)',
+  borderRadius: 12, padding: 24,
+}
+
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'var(--font-sora), system-ui, sans-serif',
+  fontSize: 16, fontWeight: 700, color: 'var(--text-1)', margin: '0 0 4px',
+}
+
+const sectionDesc: React.CSSProperties = {
+  fontSize: 13, color: 'var(--text-3)', margin: '0 0 20px',
+}
+
+const label: React.CSSProperties = {
+  display: 'block', fontSize: 13, fontWeight: 500,
+  color: 'var(--text-2)', marginBottom: 6,
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '10px 14px',
+  background: 'var(--surface-2)', border: '1px solid var(--border-mid)',
+  borderRadius: 8, color: 'var(--text-1)', fontSize: 14,
+  outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+  fontFamily: 'inherit', boxSizing: 'border-box',
+}
+
+const helperText: React.CSSProperties = {
+  fontSize: 12, color: 'var(--text-3)', marginTop: 5,
+}
+
+function Field({ label: lbl, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={label}>{lbl}</label>
+      {children}
+    </div>
+  )
+}
+
+function focusIn(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
+  e.currentTarget.style.borderColor = '#C94A1F'
+  e.currentTarget.style.boxShadow = '0 0 0 3px var(--accent-dim)'
+}
+function focusOut(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
+  e.currentTarget.style.borderColor = 'var(--border-mid)'
+  e.currentTarget.style.boxShadow = 'none'
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export default function SettingsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [userId, setUserId] = useState('')
   const [plan, setPlan] = useState('starter')
 
   // Business details
   const [businessName, setBusinessName] = useState('')
+  const [companyUrl, setCompanyUrl] = useState('')
   const [replyTo, setReplyTo] = useState('')
   const [businessType, setBusinessType] = useState('')
   const [businessTypeCustom, setBusinessTypeCustom] = useState('')
@@ -59,10 +108,11 @@ export default function SettingsPage() {
   const [addingDomain, setAddingDomain] = useState(false)
   const [domainError, setDomainError] = useState('')
   const [verifyingId, setVerifyingId] = useState<string | null>(null)
-  const [copiedId, setCopiedId] = useState<string | null>(null)
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null)
+
+  // Delete account
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -84,19 +134,19 @@ export default function SettingsPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    setUserId(user.id)
 
     const [profileRes, stripeRes, domainsRes] = await Promise.all([
-      supabase.from('users').select('company_name, plan, business_category, config_json').eq('id', user.id).single(),
+      supabase.from('users').select('company_name, company_url, plan, business_category, config_json').eq('id', user.id).single(),
       supabase.from('stripe_accounts').select('stripe_account_id, config_json').eq('user_id', user.id).single(),
       fetch('/api/domains').then(r => r.ok ? r.json() : []),
     ])
 
     if (profileRes.data) {
       setBusinessName(profileRes.data.company_name || '')
+      setCompanyUrl(profileRes.data.company_url || '')
       setPlan(profileRes.data.plan || 'starter')
       const bt = profileRes.data.business_category || ''
-      const knownTypes = ['SaaS', 'E-commerce', 'Agency', 'Marketplace', 'Mobile App', 'Media & Content', 'Education', 'Healthcare', 'Finance & Fintech', 'Other']
+      const knownTypes = ['SaaS / Software', 'E-commerce', 'Marketplace', 'Newsletter / Media', 'Community / Membership', 'Agency / Services', 'Other']
       if (bt && !knownTypes.includes(bt)) {
         setBusinessType('Other')
         setBusinessTypeCustom(bt)
@@ -107,9 +157,7 @@ export default function SettingsPage() {
     }
     if (stripeRes.data) {
       setStripeAccount(stripeRes.data)
-      if (stripeRes.data.config_json?.replyToEmail) {
-        setReplyTo(stripeRes.data.config_json.replyToEmail)
-      }
+      if (stripeRes.data.config_json?.replyToEmail) setReplyTo(stripeRes.data.config_json.replyToEmail)
       setRecoveryPaused(stripeRes.data.config_json?.recoveryPaused === true)
       setPausedAt(stripeRes.data.config_json?.pausedAt ?? null)
       setPausedBy(stripeRes.data.config_json?.pausedBy ?? null)
@@ -125,24 +173,14 @@ export default function SettingsPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     const finalBusinessType = businessType === 'Other' ? businessTypeCustom : businessType
-
-    // Load current config_json to merge
     const { data: currentUser } = await supabase.from('users').select('config_json').eq('id', user.id).single()
     const mergedConfig = { ...(currentUser?.config_json || {}), replyToEmail: replyTo }
-
-    await supabase.from('users').update({
-      company_name: businessName,
-      business_category: finalBusinessType,
-      config_json: mergedConfig,
-    }).eq('id', user.id)
-
+    await supabase.from('users').update({ company_name: businessName, company_url: companyUrl || null, business_category: finalBusinessType, config_json: mergedConfig }).eq('id', user.id)
     if (stripeAccount) {
       const cfg = { ...(stripeAccount.config_json || {}), replyToEmail: replyTo }
       await supabase.from('stripe_accounts').update({ config_json: cfg }).eq('user_id', user.id)
     }
-
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -210,12 +248,6 @@ export default function SettingsPage() {
     }
   }
 
-  const handleCopy = (id: string, text: string) => {
-    navigator.clipboard.writeText(text)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 1500)
-  }
-
   const handleCopyField = (key: string, text: string) => {
     navigator.clipboard.writeText(text)
     setCopiedField(key)
@@ -259,8 +291,6 @@ export default function SettingsPage() {
     setDisconnecting(true)
     const res = await fetch('/api/stripe/disconnect', { method: 'POST' })
     if (res.ok) {
-      // Keep stripeAccount state so the Stripe Connection section reflects the disconnect,
-      // but clear the account ID so it shows "not connected"
       setStripeAccount(prev => prev ? { ...prev, stripe_account_id: '' } : null)
       setRecoveryPaused(true)
       setPausedAt(new Date().toISOString())
@@ -281,185 +311,327 @@ export default function SettingsPage() {
     setTimeout(() => setResetSent(false), 4000)
   }
 
+  // ── Loading skeleton ───────────────────────────────────────────────────────
+
   if (loading) {
     return (
-      <div className="p-8 space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-32 bg-cream rounded-2xl animate-pulse" />
+      <div style={{ padding: '32px 32px 48px', maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {[120, 160, 100].map((h, i) => (
+          <div key={i} style={{ height: h, background: 'var(--surface-2)', borderRadius: 12, opacity: 0.5 }} />
         ))}
       </div>
     )
   }
 
+  const isGrowthPlus = plan === 'growth' || plan === 'scale'
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
-    <div className="p-8 space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-semibold text-ink">Settings</h1>
+    <div style={{ padding: '32px 32px 64px', maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-      {/* Business Details */}
-      <div className="bg-white border border-border rounded-2xl p-6 space-y-5">
-        <h2 className="text-base font-semibold text-ink">Business Details</h2>
+      {/* Heading */}
+      <div style={{ marginBottom: 8 }}>
+        <h1 style={{ fontFamily: 'var(--font-sora), system-ui, sans-serif', fontSize: 22, fontWeight: 700, color: 'var(--text-1)', margin: '0 0 4px' }}>
+          Settings
+        </h1>
+        <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>
+          Manage your account, email configuration, and recovery settings.
+        </p>
+      </div>
 
-        <Input
-          id="business-name"
-          label="Business name"
-          value={businessName}
-          onChange={(e) => setBusinessName(e.target.value)}
-          placeholder="Acme Inc."
-        />
-        <div>
-          <label className="text-sm font-medium text-ink block mb-1.5">Business type</label>
+      {/* ── Business Details ──────────────────────────────────────────────── */}
+      <div style={card}>
+        <h2 style={sectionTitle}>Business Details</h2>
+        <p style={sectionDesc}>Used in your recovery emails and account identification.</p>
+
+        <Field label="Business name">
+          <input
+            type="text"
+            value={businessName}
+            onChange={(e) => setBusinessName(e.target.value)}
+            placeholder="Acme Inc."
+            style={inputStyle}
+            onFocus={focusIn} onBlur={focusOut}
+          />
+        </Field>
+
+        <Field label="Website URL">
+          <input
+            type="url"
+            value={companyUrl}
+            onChange={(e) => setCompanyUrl(e.target.value)}
+            placeholder="https://yourwebsite.com"
+            style={inputStyle}
+            onFocus={focusIn} onBlur={focusOut}
+          />
+          <p style={helperText}>Used to personalize your recovery emails and generate your recovery strategy.</p>
+        </Field>
+
+        <Field label="Business type">
           <select
             value={businessType}
             onChange={(e) => setBusinessType(e.target.value)}
-            className="w-full border border-border rounded-lg px-3.5 py-2.5 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+            style={inputStyle}
+            onFocus={focusIn} onBlur={focusOut}
           >
-            <option value="">Select your business type...</option>
-            <option value="SaaS">SaaS</option>
+            <option value="">Select your business type…</option>
+            <option value="SaaS / Software">SaaS / Software</option>
             <option value="E-commerce">E-commerce</option>
-            <option value="Agency">Agency</option>
             <option value="Marketplace">Marketplace</option>
-            <option value="Mobile App">Mobile App</option>
-            <option value="Media & Content">Media &amp; Content</option>
-            <option value="Education">Education</option>
-            <option value="Healthcare">Healthcare</option>
-            <option value="Finance & Fintech">Finance &amp; Fintech</option>
-            <option value="Other">Other (type manually)</option>
+            <option value="Newsletter / Media">Newsletter / Media</option>
+            <option value="Community / Membership">Community / Membership</option>
+            <option value="Agency / Services">Agency / Services</option>
+            <option value="Other">Other</option>
           </select>
           {businessType === 'Other' && (
             <input
               type="text"
               value={businessTypeCustom}
               onChange={(e) => setBusinessTypeCustom(e.target.value)}
-              placeholder="Describe your business type..."
-              className="mt-2 w-full border border-border rounded-lg px-3.5 py-2.5 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+              placeholder="Describe your business type…"
+              style={{ ...inputStyle, marginTop: 8 }}
+              onFocus={focusIn} onBlur={focusOut}
             />
           )}
-        </div>
+        </Field>
 
-        <Input
-          id="reply-to"
-          label="Reply-to email"
-          type="email"
-          value={replyTo}
-          onChange={(e) => setReplyTo(e.target.value)}
-          placeholder="support@yourcompany.com"
-        />
+        <Field label="Reply-to email">
+          <input
+            type="email"
+            value={replyTo}
+            onChange={(e) => setReplyTo(e.target.value)}
+            placeholder="support@yourcompany.com"
+            style={inputStyle}
+            onFocus={focusIn} onBlur={focusOut}
+          />
+          <p style={helperText}>Customers who reply to recovery emails will reach this address.</p>
+        </Field>
 
-        <div className="flex items-center gap-3 pt-1">
-          <Button variant="primary" size="sm" onClick={handleSave} loading={saving}>
-            {saved ? <><CheckCircle2 className="w-4 h-4" /> Saved</> : <><Save className="w-4 h-4" /> Save changes</>}
-          </Button>
+        {/* Save button */}
+        <div style={{ marginTop: 20 }}>
+          <button
+            onClick={handleSave}
+            disabled={saving || saved}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '11px 24px',
+              background: saved ? 'var(--green)' : '#C94A1F',
+              color: '#fff', border: 'none', borderRadius: 8,
+              fontSize: 14, fontWeight: 600,
+              cursor: saving ? 'wait' : 'pointer',
+              opacity: saving ? 0.7 : 1,
+              transition: 'background 0.2s, opacity 0.15s',
+            }}
+            onMouseEnter={(e) => { if (!saving && !saved) e.currentTarget.style.opacity = '0.85' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+          >
+            {saving ? (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ animation: 'spin 0.8s linear infinite' }}>
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+                Saving…
+              </>
+            ) : saved ? (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Saved!
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                </svg>
+                Save changes
+              </>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Email Settings */}
-      <div className="bg-white border border-border rounded-2xl p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-ink">Email Settings</h2>
-          {plan === 'starter' || plan === 'trial' ? (
-            <span className="text-xs text-muted bg-cream border border-border rounded-full px-2.5 py-0.5">Growth+ required</span>
-          ) : null}
+      {/* ── Email Settings ────────────────────────────────────────────────── */}
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+          <h2 style={sectionTitle}>Email Settings</h2>
+          {!isGrowthPlus && (
+            <span style={{
+              fontSize: 11, fontWeight: 600,
+              background: 'var(--surface-2)', color: 'var(--text-3)',
+              border: '1px solid var(--border)', borderRadius: 100,
+              padding: '2px 9px', whiteSpace: 'nowrap',
+            }}>
+              Growth+ required for custom domain
+            </span>
+          )}
+        </div>
+        <p style={sectionDesc}>Configure the sending address for recovery emails.</p>
+
+        {/* Current sending address */}
+        <div style={{
+          background: 'var(--surface-2)', border: '1px solid var(--border)',
+          borderRadius: 10, padding: '14px 16px', marginBottom: 16,
+        }}>
+          <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-1)', margin: '0 0 2px' }}>
+            Current sending address
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>
+            billing@revorva.com (with your business name)
+          </p>
         </div>
 
-        <div className="flex items-center gap-3 p-4 bg-cream rounded-xl">
-          <div>
-            <p className="text-sm font-medium text-ink">Current sending address</p>
-            <p className="text-sm text-muted">billing@revorva.com (with your business name)</p>
-          </div>
-        </div>
-
-        {(plan === 'growth' || plan === 'scale') && (
-          <div className="space-y-4">
-            <p className="text-sm text-muted">Add your domain to send from <span className="text-ink font-medium">billing@yourdomain.com</span>.</p>
+        {/* Growth+: domain management */}
+        {isGrowthPlus && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', margin: 0 }}>
+              Add your domain to send from{' '}
+              <span style={{ color: 'var(--text-1)', fontWeight: 500 }}>billing@yourdomain.com</span>.
+            </p>
 
             {domains.map((d) => {
               const isVerified = d.verified || d.verification_status === 'verified'
               const records: DnsRecord[] = Array.isArray(d.dns_records) ? d.dns_records : []
 
               return (
-                <div key={d.id} className="border border-border rounded-xl overflow-hidden">
+                <div key={d.id} style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
                   {/* Domain header */}
-                  <div className="flex items-center justify-between px-4 py-3 bg-cream">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-sm font-medium text-ink">{d.domain}</span>
-                      <Badge variant={isVerified ? 'recovered' : 'pending'}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    background: 'var(--surface-2)',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)' }}>{d.domain}</span>
+                      <span style={{
+                        fontSize: 11, fontWeight: 600, padding: '2px 9px', borderRadius: 100,
+                        background: isVerified ? 'var(--green-dim)' : 'var(--surface-3)',
+                        color: isVerified ? 'var(--green)' : 'var(--text-3)',
+                        border: `1px solid ${isVerified ? 'var(--green-border)' : 'var(--border)'}`,
+                      }}>
                         {isVerified ? 'Verified' : 'Pending DNS'}
-                      </Badge>
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       {!isVerified && (
-                        <Button variant="outline" size="sm" onClick={() => handleVerify(d.id)} disabled={verifyingId === d.id}>
-                          {verifyingId === d.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                        <button
+                          onClick={() => handleVerify(d.id)}
+                          disabled={verifyingId === d.id}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            padding: '6px 12px', fontSize: 12, fontWeight: 500,
+                            background: 'var(--surface-3)', border: '1px solid var(--border-mid)',
+                            borderRadius: 7, color: 'var(--text-1)', cursor: 'pointer',
+                            opacity: verifyingId === d.id ? 0.6 : 1, transition: 'all 0.15s',
+                          }}
+                        >
+                          {verifyingId === d.id ? (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                              style={{ animation: 'spin 0.8s linear infinite' }}>
+                              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                            </svg>
+                          ) : (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-4.14"/>
+                            </svg>
+                          )}
                           Check DNS
-                        </Button>
+                        </button>
                       )}
                       {removeConfirmId === d.id ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-red-600">Remove?</span>
-                          <Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-50 border border-red-200 h-7 px-2 text-xs" onClick={() => handleDelete(d.id)} disabled={removingId === d.id}>
-                            {removingId === d.id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Yes'}
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs border border-border" onClick={() => setRemoveConfirmId(null)}>No</Button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 12, color: 'var(--red)' }}>Remove?</span>
+                          <button
+                            onClick={() => handleDelete(d.id)}
+                            disabled={removingId === d.id}
+                            style={{ padding: '4px 10px', fontSize: 12, background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid var(--red-border)', borderRadius: 6, cursor: 'pointer' }}
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={() => setRemoveConfirmId(null)}
+                            style={{ padding: '4px 10px', fontSize: 12, background: 'var(--surface-3)', color: 'var(--text-2)', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer' }}
+                          >
+                            No
+                          </button>
                         </div>
                       ) : (
-                        <button onClick={() => setRemoveConfirmId(d.id)} className="text-muted hover:text-red-600 transition-colors p-1">
-                          <Trash2 className="w-4 h-4" />
+                        <button
+                          onClick={() => setRemoveConfirmId(d.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4, display: 'flex', transition: 'color 0.15s' }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--red)'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-3)'}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                          </svg>
                         </button>
                       )}
                     </div>
                   </div>
 
-                  {/* Verified state */}
+                  {/* Verified: sending address confirmation */}
                   {isVerified && (
-                    <div className="px-4 py-3 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                      <p className="text-sm text-muted">
-                        Recovery emails will be sent from <span className="font-medium text-ink">billing@{d.domain}</span>
-                      </p>
+                    <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--green)' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      <span style={{ fontSize: 13 }}>
+                        Recovery emails will be sent from <strong>billing@{d.domain}</strong>
+                      </span>
                     </div>
                   )}
 
-                  {/* DNS records table */}
+                  {/* Pending: DNS records table */}
                   {!isVerified && records.length > 0 && (
-                    <div className="p-4 space-y-3">
-                      <div>
-                        <p className="text-sm font-medium text-ink mb-0.5">Add these DNS records</p>
-                        <p className="text-xs text-muted">Changes can take up to 24 hours to propagate. After adding the records, click "Check DNS" above.</p>
-                      </div>
-                      <div className="rounded-lg border border-border overflow-hidden">
-                        <table className="w-full text-xs">
+                    <div style={{ padding: 16 }}>
+                      <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-1)', margin: '0 0 4px' }}>Add these DNS records</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 12px' }}>
+                        Changes can take up to 24 hours to propagate. After adding the records, click "Check DNS" above.
+                      </p>
+                      <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                           <thead>
-                            <tr className="bg-cream border-b border-border">
-                              <th className="text-left px-3 py-2 text-muted font-medium w-16">Type</th>
-                              <th className="text-left px-3 py-2 text-muted font-medium w-1/3">Name</th>
-                              <th className="text-left px-3 py-2 text-muted font-medium">Value</th>
-                              <th className="w-8" />
+                            <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border)' }}>
+                              {['Type', 'Name', 'Value', ''].map((h, i) => (
+                                <th key={i} style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--text-3)', fontWeight: 500, width: i === 0 ? 64 : i === 3 ? 32 : undefined }}>
+                                  {h}
+                                </th>
+                              ))}
                             </tr>
                           </thead>
                           <tbody>
                             {records.map((rec, i) => {
                               const copyKey = `${d.id}-${i}`
                               return (
-                                <tr key={i} className={i < records.length - 1 ? 'border-b border-border' : ''}>
-                                  <td className="px-3 py-2.5">
-                                    <span className="font-mono font-medium text-ink bg-cream px-1.5 py-0.5 rounded text-xs">{rec.type}</span>
+                                <tr key={i} style={{ borderBottom: i < records.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                                  <td style={{ padding: '10px 12px' }}>
+                                    <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, background: 'var(--surface-3)', border: '1px solid var(--border)', borderRadius: 4, padding: '2px 6px', color: 'var(--text-1)' }}>
+                                      {rec.type}
+                                    </span>
                                   </td>
-                                  <td className="px-3 py-2.5">
-                                    <span className="font-mono text-ink break-all">{rec.name}</span>
-                                  </td>
-                                  <td className="px-3 py-2.5">
-                                    <span className="font-mono text-muted break-all">{rec.value}</span>
-                                  </td>
-                                  <td className="px-2 py-2.5">
+                                  <td style={{ padding: '10px 12px', fontFamily: 'var(--font-jetbrains-mono), monospace', color: 'var(--text-1)', wordBreak: 'break-all' }}>{rec.name}</td>
+                                  <td style={{ padding: '10px 12px', fontFamily: 'var(--font-jetbrains-mono), monospace', color: 'var(--text-2)', wordBreak: 'break-all' }}>{rec.value}</td>
+                                  <td style={{ padding: '10px 12px' }}>
                                     <button
                                       onClick={() => handleCopyField(copyKey, rec.value)}
-                                      className="text-muted hover:text-ink transition-colors"
                                       title="Copy value"
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', transition: 'color 0.15s' }}
+                                      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-1)'}
+                                      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-3)'}
                                     >
-                                      {copiedField === copyKey
-                                        ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                                        : <Copy className="w-3.5 h-3.5" />
-                                      }
+                                      {copiedField === copyKey ? (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                          <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                      ) : (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                        </svg>
+                                      )}
                                     </button>
                                   </td>
                                 </tr>
@@ -471,142 +643,265 @@ export default function SettingsPage() {
                     </div>
                   )}
 
-                  {/* Pending but no records (legacy domain) */}
+                  {/* Pending: no DNS records */}
                   {!isVerified && records.length === 0 && (
-                    <div className="px-4 py-3">
-                      <p className="text-xs text-muted">DNS records unavailable. Remove this domain and re-add it to get the required records.</p>
+                    <div style={{ padding: '12px 16px' }}>
+                      <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0 }}>
+                        DNS records unavailable. Remove this domain and re-add it to get the required records.
+                      </p>
                     </div>
                   )}
                 </div>
               )
             })}
 
-            <div className="flex gap-2">
-              <Input
-                id="new-domain"
-                placeholder="yourdomain.com"
-                value={newDomain}
-                onChange={(e) => setNewDomain(e.target.value)}
-                error={domainError}
-              />
-              <Button variant="outline" size="md" onClick={handleAddDomain} disabled={addingDomain} className="flex-shrink-0">
-                {addingDomain ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            {/* Add domain row */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="text"
+                  value={newDomain}
+                  onChange={(e) => setNewDomain(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddDomain() }}
+                  placeholder="yourdomain.com"
+                  style={{ ...inputStyle, ...(domainError ? { borderColor: 'var(--red)' } : {}) }}
+                  onFocus={focusIn} onBlur={focusOut}
+                />
+                {domainError && <p style={{ fontSize: 12, color: 'var(--red)', marginTop: 5 }}>{domainError}</p>}
+              </div>
+              <button
+                onClick={handleAddDomain}
+                disabled={addingDomain}
+                style={{
+                  flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '10px 18px', fontSize: 13, fontWeight: 500,
+                  background: 'var(--surface-3)', border: '1px solid var(--border-mid)',
+                  borderRadius: 8, color: 'var(--text-1)', cursor: addingDomain ? 'wait' : 'pointer',
+                  transition: 'all 0.15s', opacity: addingDomain ? 0.6 : 1,
+                }}
+                onMouseEnter={(e) => { if (!addingDomain) { e.currentTarget.style.background = '#C94A1F'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#C94A1F' } }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--surface-3)'; e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.borderColor = 'var(--border-mid)' }}
+              >
+                {addingDomain ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ animation: 'spin 0.8s linear infinite' }}>
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                )}
                 Add
-              </Button>
+              </button>
             </div>
           </div>
         )}
 
-        {(plan === 'starter' || plan === 'trial') && (
-          <div className="p-4 bg-accent-light border border-accent/20 rounded-xl">
-            <p className="text-sm text-ink font-medium mb-1">Send from your own domain</p>
-            <p className="text-sm text-muted mb-3">
-              Upgrade to Growth to send recovery emails from <span className="font-medium text-ink">billing@yourdomain.com</span> instead of billing@revorva.com.
+        {/* Starter: upgrade prompt */}
+        {!isGrowthPlus && (
+          <div style={{
+            marginTop: 4,
+            padding: '14px 16px',
+            background: 'var(--accent-dim)', border: '1px solid var(--accent-border)',
+            borderRadius: 10,
+          }}>
+            <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-1)', margin: '0 0 4px' }}>
+              Send from your own domain
             </p>
-            <a href="/billing" className="text-sm text-accent font-medium hover:underline">Upgrade to Growth →</a>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '0 0 10px' }}>
+              Upgrade to Growth to send from{' '}
+              <span style={{ color: 'var(--text-1)', fontWeight: 500 }}>billing@yourdomain.com</span>.
+            </p>
+            <a href="/billing" style={{ fontSize: 13, color: '#C94A1F', fontWeight: 500, textDecoration: 'none' }}>
+              Upgrade to Growth →
+            </a>
           </div>
         )}
       </div>
 
-      {/* Stripe Connection */}
-      <div className="bg-white border border-border rounded-2xl p-6 space-y-4">
-        <h2 className="text-base font-semibold text-ink">Stripe Connection</h2>
+      {/* ── Stripe Connection ─────────────────────────────────────────────── */}
+      <div style={card}>
+        <h2 style={sectionTitle}>Stripe Connection</h2>
+        <p style={sectionDesc}>Your connected Stripe account for monitoring failed payments.</p>
 
-        {stripeAccount ? (
-          <div className="flex items-center justify-between p-4 bg-cream rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
+        {stripeAccount?.stripe_account_id ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: 'var(--surface-2)', border: '1px solid var(--green-border)',
+            borderRadius: 10, padding: '14px 16px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                width: 34, height: 34, flexShrink: 0,
+                background: 'var(--green-dim)', border: '1px solid var(--green-border)',
+                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
               </div>
               <div>
-                <p className="text-sm font-medium text-ink">Connected</p>
-                <p className="text-xs text-muted font-mono">{stripeAccount.stripe_account_id}</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--green)', margin: '0 0 2px' }}>Connected</p>
+                <p style={{ fontSize: 12, fontFamily: 'var(--font-jetbrains-mono), monospace', color: 'var(--text-3)', margin: 0 }}>
+                  {stripeAccount.stripe_account_id}
+                </p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleDisconnect} disabled={disconnecting} className="text-red-600 hover:text-red-700 hover:bg-red-50">
-              Disconnect
-            </Button>
+            <button
+              onClick={handleDisconnect}
+              disabled={disconnecting}
+              style={{
+                padding: '6px 14px', fontSize: 13, fontWeight: 500,
+                color: 'var(--red)', background: 'transparent',
+                border: '1px solid var(--red-border)', borderRadius: 7,
+                cursor: disconnecting ? 'wait' : 'pointer', opacity: disconnecting ? 0.6 : 1,
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={(e) => { if (!disconnecting) e.currentTarget.style.background = 'var(--red-dim)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            >
+              {disconnecting ? 'Disconnecting…' : 'Disconnect'}
+            </button>
           </div>
         ) : (
-          <div className="flex items-center justify-between p-4 bg-cream rounded-xl">
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: 'var(--surface-2)', border: '1px solid var(--border)',
+            borderRadius: 10, padding: '14px 16px',
+          }}>
             <div>
-              <p className="text-sm font-medium text-ink">Not connected</p>
-              <p className="text-xs text-muted">Connect Stripe to start recovering payments</p>
+              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)', margin: '0 0 2px' }}>Not connected</p>
+              <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0 }}>Connect Stripe to start recovering payments</p>
             </div>
-            <Button variant="accent" size="sm" onClick={() => window.location.href = '/api/stripe/connect/start'}>
-              <Link2 className="w-4 h-4" />
-              Connect
-            </Button>
+            <button
+              onClick={() => window.location.href = '/api/stripe/connect/start'}
+              style={{
+                padding: '8px 16px', fontSize: 13, fontWeight: 600,
+                background: '#C94A1F', color: '#fff',
+                border: 'none', borderRadius: 8, cursor: 'pointer', transition: 'opacity 0.15s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              Connect Stripe
+            </button>
           </div>
         )}
       </div>
 
-      {/* Recovery Status */}
+      {/* ── Recovery Status ───────────────────────────────────────────────── */}
       {stripeAccount && (
-        <div className="bg-white border border-border rounded-2xl p-6 space-y-4">
-          <h2 className="text-base font-semibold text-ink">Recovery Status</h2>
+        <div style={card}>
+          <h2 style={sectionTitle}>Recovery Status</h2>
+          <p style={sectionDesc}>Control whether recovery emails and retries are running.</p>
 
           {recoveryPaused ? (
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                <PauseCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{
+                background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.25)',
+                borderRadius: 10, padding: '14px 16px',
+                display: 'flex', alignItems: 'flex-start', gap: 12,
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                  <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                </svg>
+                <div>
                   {pausedBy === 'stripe_disconnect' ? (
                     <>
-                      <p className="text-sm font-semibold text-amber-900">Currently: Paused — Stripe disconnected</p>
-                      <p className="text-sm text-amber-700 mt-0.5">
+                      <p style={{ fontSize: 14, fontWeight: 600, color: '#92400E', margin: '0 0 3px' }}>
+                        Currently: Paused — Stripe disconnected
+                      </p>
+                      <p style={{ fontSize: 13, color: '#B45309', margin: 0 }}>
                         Reconnect your Stripe account to re-enable recovery, then click Resume.
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="text-sm font-semibold text-amber-900">Currently: Paused</p>
-                      <p className="text-sm text-amber-700 mt-0.5">
+                      <p style={{ fontSize: 14, fontWeight: 600, color: '#92400E', margin: '0 0 3px' }}>
+                        Currently: Paused
+                      </p>
+                      <p style={{ fontSize: 13, color: '#B45309', margin: 0 }}>
                         No emails are being sent. No retries are running.
                       </p>
                     </>
                   )}
                   {pausedAt && (
-                    <span className="block text-xs mt-1 text-amber-600">
+                    <p style={{ fontSize: 12, color: '#D97706', margin: '6px 0 0' }}>
                       Paused since {new Date(pausedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                    </p>
                   )}
                 </div>
               </div>
               {pausedBy === 'stripe_disconnect' ? (
-                <Button variant="primary" size="sm" onClick={() => window.location.href = '/api/stripe/connect/start'}>
-                  <PlayCircle className="w-4 h-4" />
+                <button
+                  onClick={() => window.location.href = '/api/stripe/connect/start'}
+                  style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', fontSize: 13, fontWeight: 600, background: '#C94A1F', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', transition: 'opacity 0.15s' }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
                   Reconnect Stripe
-                </Button>
+                </button>
               ) : (
-                <Button variant="primary" size="sm" onClick={handleResume} loading={togglingPause}>
-                  <PlayCircle className="w-4 h-4" />
-                  Resume recovery
-                </Button>
+                <button
+                  onClick={handleResume}
+                  disabled={togglingPause}
+                  style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', fontSize: 13, fontWeight: 600, background: '#C94A1F', color: '#fff', border: 'none', borderRadius: 8, cursor: togglingPause ? 'wait' : 'pointer', opacity: togglingPause ? 0.7 : 1, transition: 'opacity 0.15s' }}
+                  onMouseEnter={(e) => { if (!togglingPause) e.currentTarget.style.opacity = '0.85' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                  {togglingPause ? 'Resuming…' : 'Resume recovery'}
+                </button>
               )}
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
-                <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0 mt-1.5" />
-                <div>
-                  <p className="text-sm font-semibold text-green-900">Currently: Active</p>
-                  <p className="text-sm text-green-700 mt-0.5">
-                    Recovery is running. Failed payments will be detected and emails sent automatically.
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{
+                background: 'var(--green-dim)', border: '1px solid var(--green-border)',
+                borderRadius: 10, padding: '14px 16px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{
+                    width: 8, height: 8, background: 'var(--green)',
+                    borderRadius: '50%', flexShrink: 0,
+                    animation: 'pulse 2s ease-in-out infinite',
+                    display: 'inline-block',
+                  }} />
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--green)', margin: 0 }}>
+                    Currently: Active
                   </p>
                 </div>
+                <p style={{ fontSize: 13, color: 'var(--green)', opacity: 0.8, margin: '4px 0 0 16px' }}>
+                  Recovery is running. Failed payments will be detected and emails sent automatically.
+                </p>
               </div>
-              <div className="space-y-1">
-                <Button
-                  variant="outline"
-                  size="sm"
+
+              <div>
+                <button
                   onClick={() => setShowPauseModal(true)}
-                  loading={togglingPause}
+                  disabled={togglingPause}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    padding: '9px 18px', fontSize: 13, fontWeight: 500,
+                    background: 'transparent', border: '1px solid var(--border-mid)',
+                    borderRadius: 8, color: 'var(--text-2)',
+                    cursor: togglingPause ? 'wait' : 'pointer', transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--red)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.background = 'var(--red-dim)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-mid)'; e.currentTarget.style.color = 'var(--text-2)'; e.currentTarget.style.background = 'transparent' }}
                 >
-                  <PauseCircle className="w-4 h-4" />
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                  </svg>
                   Pause recovery
-                </Button>
-                <p className="text-xs text-muted pl-0.5">
+                </button>
+                <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 7 }}>
                   Pausing stops all recovery emails and retry attempts. Existing jobs are held until you resume.
                 </p>
               </div>
@@ -615,129 +910,204 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Security */}
-      <div className="bg-white border border-border rounded-2xl p-6 space-y-4">
-        <h2 className="text-base font-semibold text-ink">Security</h2>
-        <div className="flex items-center justify-between p-4 bg-cream rounded-xl">
+      {/* ── Security ──────────────────────────────────────────────────────── */}
+      <div style={card}>
+        <h2 style={sectionTitle}>Security</h2>
+        <p style={sectionDesc}>Manage your login credentials.</p>
+
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'var(--surface-2)', border: '1px solid var(--border)',
+          borderRadius: 10, padding: '14px 16px',
+        }}>
           <div>
-            <p className="text-sm font-medium text-ink">Password</p>
-            <p className="text-xs text-muted">Send a password reset link to your email address</p>
+            <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-1)', margin: '0 0 3px' }}>Password</p>
+            <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0 }}>
+              Send a password reset link to your email address
+            </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={handlePasswordReset}
-            loading={sendingReset}
-            disabled={resetSent}
+            disabled={sendingReset || resetSent}
+            style={{
+              flexShrink: 0, display: 'flex', alignItems: 'center', gap: 7,
+              padding: '8px 16px', fontSize: 13, fontWeight: 500,
+              background: resetSent ? 'var(--green-dim)' : 'var(--surface-3)',
+              color: resetSent ? 'var(--green)' : 'var(--text-1)',
+              border: `1px solid ${resetSent ? 'var(--green-border)' : 'var(--border-mid)'}`,
+              borderRadius: 8, cursor: sendingReset ? 'wait' : 'pointer',
+              opacity: sendingReset ? 0.6 : 1, transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => { if (!sendingReset && !resetSent) { e.currentTarget.style.borderColor = 'var(--border-bright)'; e.currentTarget.style.background = 'var(--surface-2)' } }}
+            onMouseLeave={(e) => { if (!resetSent) { e.currentTarget.style.borderColor = 'var(--border-mid)'; e.currentTarget.style.background = 'var(--surface-3)' } }}
           >
-            {resetSent
-              ? <><CheckCircle2 className="w-4 h-4 text-green-600" /> Link sent</>
-              : <><Lock className="w-4 h-4" /> Change password</>
-            }
-          </Button>
+            {resetSent ? (
+              <>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Link sent
+              </>
+            ) : sendingReset ? (
+              <>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ animation: 'spin 0.8s linear infinite' }}>
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+                Sending…
+              </>
+            ) : (
+              <>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Change password
+              </>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Danger Zone */}
-      <div className="bg-white border border-red-200 rounded-2xl p-6">
-        <h2 className="text-base font-semibold text-red-700 mb-3">Danger Zone</h2>
-        <p className="text-sm text-muted mb-4">Permanently delete your account and all data. This cannot be undone.</p>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-red-600 hover:bg-red-50 border border-red-200"
+      {/* ── Danger Zone ───────────────────────────────────────────────────── */}
+      <div style={{ ...card, border: '1px solid var(--red-border)' }}>
+        <h2 style={{ ...sectionTitle, color: 'var(--red)' }}>Danger Zone</h2>
+        <p style={{ ...sectionDesc, marginBottom: 16 }}>
+          Permanently delete your account and all data. This cannot be undone.
+        </p>
+        <button
           onClick={() => setShowDeleteModal(true)}
+          style={{
+            padding: '9px 20px', fontSize: 13, fontWeight: 500,
+            background: 'transparent', color: 'var(--red)',
+            border: '1px solid var(--red-border)', borderRadius: 8,
+            cursor: 'pointer', transition: 'all 0.15s',
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--red-dim)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
         >
           Delete account
-        </Button>
+        </button>
       </div>
 
-      {/* Pause confirmation modal */}
+      {/* ── Pause modal ───────────────────────────────────────────────────── */}
       {showPauseModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-ink">Pause recovery?</h3>
-              <button onClick={() => setShowPauseModal(false)} className="text-muted hover:text-ink">
-                <X className="w-5 h-5" />
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, maxWidth: 380, width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', fontFamily: 'var(--font-sora), system-ui, sans-serif', margin: 0 }}>Pause recovery?</h3>
+              <button onClick={() => setShowPauseModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4, display: 'flex', transition: 'color 0.15s' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-1)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-3)'}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
               </button>
             </div>
-            <p className="text-sm text-muted leading-relaxed mb-5">
-              Existing recovery jobs will be held. New failed payments won&apos;t trigger recovery.
-              You can resume anytime.
+            <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6, margin: '0 0 20px' }}>
+              Existing recovery jobs will be held. New failed payments won't trigger recovery. You can resume anytime.
             </p>
-            <div className="flex gap-3">
-              <Button variant="ghost" size="sm" className="flex-1 border border-border" onClick={() => setShowPauseModal(false)}>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowPauseModal(false)}
+                style={{ flex: 1, padding: '9px 16px', fontSize: 13, fontWeight: 500, background: 'transparent', border: '1px solid var(--border-mid)', borderRadius: 8, color: 'var(--text-2)', cursor: 'pointer' }}
+              >
                 Cancel
-              </Button>
-              <Button variant="primary" size="sm" className="flex-1" onClick={handlePauseConfirm}>
-                <PauseCircle className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handlePauseConfirm}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '9px 16px', fontSize: 13, fontWeight: 600, background: '#C94A1F', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', transition: 'opacity 0.15s' }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                </svg>
                 Pause recovery
-              </Button>
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Toast */}
+      {/* ── Toast ─────────────────────────────────────────────────────────── */}
       {pauseToast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-ink text-white text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg">
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 50, background: 'var(--surface-3)', border: '1px solid var(--border-mid)', color: 'var(--text-1)', fontSize: 13, fontWeight: 500, padding: '10px 18px', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', whiteSpace: 'nowrap' }}>
           {pauseToast}
         </div>
       )}
 
-      {/* Delete account modal */}
+      {/* ── Delete account modal ──────────────────────────────────────────── */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-red-700">Delete account</h3>
-              <button onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(''); setDeleteError('') }} className="text-muted hover:text-ink">
-                <X className="w-5 h-5" />
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--red-border)', borderRadius: 14, padding: 24, maxWidth: 440, width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--red)', fontFamily: 'var(--font-sora), system-ui, sans-serif', margin: 0 }}>Delete account</h3>
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(''); setDeleteError('') }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4, display: 'flex' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
               </button>
             </div>
-            <p className="text-sm text-muted leading-relaxed mb-4">
-              This will permanently delete your account, all recovery jobs, Stripe connection, and any stored data. Your Stripe subscription will be cancelled immediately. <strong className="text-ink">This cannot be undone.</strong>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6, margin: '0 0 16px' }}>
+              This will permanently delete your account, all recovery jobs, Stripe connection, and any stored data. Your Stripe subscription will be cancelled immediately.{' '}
+              <strong style={{ color: 'var(--text-1)' }}>This cannot be undone.</strong>
             </p>
-            <p className="text-sm font-medium text-ink mb-2">
-              Type <span className="font-mono bg-red-50 text-red-700 px-1.5 py-0.5 rounded">DELETE</span> to confirm:
+            <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-1)', margin: '0 0 8px' }}>
+              Type{' '}
+              <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 12, background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid var(--red-border)', borderRadius: 4, padding: '1px 6px' }}>
+                DELETE
+              </span>
+              {' '}to confirm:
             </p>
             <input
               type="text"
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="Type DELETE to confirm"
-              className="w-full border border-red-200 rounded-lg px-3.5 py-2.5 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-red-300 mb-4"
               autoComplete="off"
+              style={{ ...inputStyle, borderColor: deleteConfirmText && deleteConfirmText !== 'DELETE' ? 'var(--red)' : 'var(--border-mid)', marginBottom: 12 }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--red)'; e.currentTarget.style.boxShadow = '0 0 0 3px var(--red-dim)' }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-mid)'; e.currentTarget.style.boxShadow = 'none' }}
             />
             {deleteError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5 mb-4">
+              <p style={{ fontSize: 13, color: 'var(--red)', background: 'var(--red-dim)', border: '1px solid var(--red-border)', borderRadius: 8, padding: '10px 14px', margin: '0 0 14px' }}>
                 {deleteError}
               </p>
             )}
-            <div className="flex gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-1 border border-border"
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
                 onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(''); setDeleteError('') }}
+                style={{ flex: 1, padding: '9px 16px', fontSize: 13, fontWeight: 500, background: 'transparent', border: '1px solid var(--border-mid)', borderRadius: 8, color: 'var(--text-2)', cursor: 'pointer' }}
               >
                 Cancel
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-1 text-red-600 hover:bg-red-50 border border-red-200 disabled:opacity-40"
+              </button>
+              <button
                 onClick={handleDeleteAccount}
-                loading={deleting}
-                disabled={deleteConfirmText !== 'DELETE'}
+                disabled={deleteConfirmText !== 'DELETE' || deleting}
+                style={{
+                  flex: 1, padding: '9px 16px', fontSize: 13, fontWeight: 600,
+                  background: deleteConfirmText === 'DELETE' ? 'var(--red-dim)' : 'transparent',
+                  color: 'var(--red)', border: '1px solid var(--red-border)', borderRadius: 8,
+                  cursor: deleteConfirmText !== 'DELETE' || deleting ? 'not-allowed' : 'pointer',
+                  opacity: deleteConfirmText !== 'DELETE' || deleting ? 0.45 : 1,
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={(e) => { if (deleteConfirmText === 'DELETE' && !deleting) e.currentTarget.style.background = 'var(--red)'; e.currentTarget.style.color = '#fff' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = deleteConfirmText === 'DELETE' ? 'var(--red-dim)' : 'transparent'; e.currentTarget.style.color = 'var(--red)' }}
               >
-                Delete my account
-              </Button>
+                {deleting ? 'Deleting…' : 'Delete my account'}
+              </button>
             </div>
           </div>
         </div>
       )}
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } } @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
     </div>
   )
 }

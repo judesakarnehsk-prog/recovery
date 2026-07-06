@@ -257,6 +257,7 @@ export async function POST(request: NextRequest) {
             step: emailStep,
             to_email: customerEmail,
             subject: emailResult.subject,
+            body_html: emailResult.html,
             status: 'sent',
             resend_id: emailResult.resendId,
           })
@@ -500,6 +501,29 @@ export async function POST(request: NextRequest) {
         .eq('id', userId)
 
       console.log(`checkout.session.completed: user ${userId} → plan "${plan}" (priceId: ${priceId ?? 'none'})`)
+
+      // Sync the subscription's actual trial_end back to Supabase so both
+      // clocks agree. Without this, users.trial_ends_at stays at the default
+      // set by the DB trigger (signup date + 14 days) and may drift from what
+      // Stripe has if the user subscribed mid-trial.
+      if (session.subscription) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(
+            session.subscription as string
+          )
+          if (subscription.trial_end) {
+            const trialEndIso = new Date(subscription.trial_end * 1000).toISOString()
+            await supabase
+              .from('users')
+              .update({ trial_ends_at: trialEndIso })
+              .eq('id', userId)
+            console.log(`checkout.session.completed: synced trial_end ${trialEndIso} for user ${userId}`)
+          }
+        } catch (subErr) {
+          // Non-fatal — trial_ends_at will still be correct via the DB default
+          console.error('checkout.session.completed: failed to sync trial_end:', subErr)
+        }
+      }
     } catch (err) {
       console.error('Error processing checkout.session.completed:', err)
     }

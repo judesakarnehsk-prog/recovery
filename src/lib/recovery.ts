@@ -67,6 +67,7 @@ function sanitizeCustomerName(name: string | null | undefined): string {
 interface SendRecoveryEmailResult {
   sent: boolean
   subject: string
+  html: string
   resendId: string | null
 }
 
@@ -85,6 +86,16 @@ export async function sendRecoveryEmail(
     const subjectPrefix = account.config_json?.subjectPrefix || ''
     const safeCustomerName = sanitizeCustomerName(job.customer_name)
 
+    // Fetch business context for richer AI-generated emails
+    const supabase = createServiceRoleClient()
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('business_category, company_url')
+      .eq('id', job.user_id)
+      .single()
+    const businessCategory = userProfile?.business_category ?? undefined
+    const companyUrl = userProfile?.company_url ?? undefined
+
     console.log('[recovery] sendRecoveryEmail — branding config:', {
       businessName,
       brandColor,
@@ -92,6 +103,8 @@ export async function sendRecoveryEmail(
       replyTo: replyTo || null,
       dunningTone,
       subjectPrefix: subjectPrefix || null,
+      businessCategory: businessCategory || null,
+      companyUrl: companyUrl || null,
     })
 
     // Use Stripe hosted invoice URL for payment link
@@ -121,6 +134,8 @@ export async function sendRecoveryEmail(
         logoUrl,
         dunningTone,
         subjectPrefix,
+        businessCategory,
+        companyUrl,
       })
       subject = result.subject
       html = result.html
@@ -141,6 +156,7 @@ export async function sendRecoveryEmail(
         brandColor,
         logoUrl,
         paymentUrl: billingPortalUrl,
+        businessCategory,
       })
       subject = fallback.subject
       html = fallback.html
@@ -165,13 +181,13 @@ export async function sendRecoveryEmail(
 
     if (sendError) {
       console.error('[recovery] Resend error:', sendError)
-      return { sent: false, subject, resendId: null }
+      return { sent: false, subject, html, resendId: null }
     }
 
-    return { sent: true, subject, resendId: sendData?.id ?? null }
+    return { sent: true, subject, html, resendId: sendData?.id ?? null }
   } catch (err) {
     console.error('[recovery] sendRecoveryEmail error:', err)
-    return { sent: false, subject: '', resendId: null }
+    return { sent: false, subject: '', html: '', resendId: null }
   }
 }
 
@@ -321,6 +337,7 @@ export async function processRecoveryJob(jobId: string): Promise<void> {
         step: emailStep,
         to_email: job.customer_email,
         subject: result.subject,
+        body_html: result.html,
         status: 'sent',
         resend_id: result.resendId,
       })
@@ -331,7 +348,8 @@ export async function processRecoveryJob(jobId: string): Promise<void> {
 
     console.log(`[recovery] step ${emailStep} complete, next retry at:`, nextRetryAt ?? 'none scheduled')
   } else {
-    // Step 4: final Stripe retry, no email
+    // Step 4: final Stripe retry only — no email sent, so no email_log entry written here.
+    // The full schedule is: Day 0 email, Day 3 email+retry, Day 7 email+retry, Day 14 retry only.
     console.log('[recovery] Step 4 — final Stripe retry only, no email sent')
     const retryResult = await retryPayment(account.stripe_account_id, job.payment_intent_id)
     console.log('[recovery] Final retry result:', retryResult)

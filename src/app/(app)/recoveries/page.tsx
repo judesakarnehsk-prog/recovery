@@ -74,6 +74,20 @@ interface Recovery {
   next_retry_at: string | null
 }
 
+interface EmailLog {
+  id: string
+  recovery_id: string
+  user_id: string
+  to_email: string
+  subject: string
+  body_html?: string | null
+  step: number
+  resend_id: string
+  status: string
+  sent_at: string
+  noLog?: boolean
+}
+
 const PAGE_SIZE = 20
 
 const EMAIL_STEPS = [
@@ -90,6 +104,10 @@ export default function RecoveriesPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Recovery | null>(null)
+  const [emailLogs, setEmailLogs] = useState<EmailLog[]>([])
+  const [emailLogsLoading, setEmailLogsLoading] = useState(false)
+  const [selectedEmail, setSelectedEmail] = useState<EmailLog | null>(null)
+  const [copiedResendId, setCopiedResendId] = useState(false)
   const [skippingId, setSkippingId] = useState<string | null>(null)
   const [skipConfirmId, setSkipConfirmId] = useState<string | null>(null)
 
@@ -118,6 +136,31 @@ export default function RecoveriesPage() {
 
   useEffect(() => { loadRecoveries() }, [loadRecoveries])
   useEffect(() => { setPage(0) }, [statusFilter])
+
+  // Fetch email logs when detail panel opens
+  useEffect(() => {
+    if (!selected) { setEmailLogs([]); return }
+    setEmailLogsLoading(true)
+    const supabase = createClient()
+    supabase
+      .from('email_log')
+      .select('*')
+      .eq('recovery_id', selected.id)
+      .order('step', { ascending: true })
+      .then(({ data }) => {
+        setEmailLogs(data ?? [])
+        setEmailLogsLoading(false)
+      })
+  }, [selected])
+
+  // Close email modal on Escape
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedEmail(null)
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [])
 
   const handleSkip = async (id: string) => {
     setSkippingId(id)
@@ -416,6 +459,250 @@ export default function RecoveriesPage() {
         </div>
       )}
 
+      <style>{`
+        @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: translateY(0) } }
+        .row-skip-btn { opacity: 0 !important; }
+        tr:hover .row-skip-btn { opacity: 1 !important; }
+      `}</style>
+
+      {/* Email detail modal */}
+      {selectedEmail && (
+        <div
+          onClick={() => setSelectedEmail(null)}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 200,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            animation: 'fadeIn 0.15s ease',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border-mid)',
+              borderRadius: 14,
+              width: 520,
+              maxWidth: 'calc(100vw - 48px)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+              animation: 'slideUp 0.2s cubic-bezier(0.16,1,0.3,1)',
+            }}
+          >
+            {/* Modal header */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '18px 20px',
+              borderBottom: '1px solid var(--border)',
+            }}>
+              <h3 style={{
+                fontFamily: 'var(--font-sora), system-ui, sans-serif',
+                fontSize: 15, fontWeight: 600, color: 'var(--text-1)', margin: 0,
+              }}>
+                Email details
+              </h3>
+              <button
+                onClick={() => setSelectedEmail(null)}
+                style={{
+                  width: 28, height: 28,
+                  background: 'var(--surface-2)', border: '1px solid var(--border)',
+                  borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: 'var(--text-2)', transition: 'all 0.15s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-3)'; e.currentTarget.style.color = 'var(--text-1)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--text-2)' }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+              {/* Step — always shown */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0 }}>Step</p>
+                <p style={{ fontSize: 14, color: 'var(--text-1)', margin: 0 }}>
+                  {EMAIL_STEPS.find((s) => s.step === selectedEmail.step)
+                    ? `${EMAIL_STEPS.find((s) => s.step === selectedEmail.step)!.label} — ${EMAIL_STEPS.find((s) => s.step === selectedEmail.step)!.day}`
+                    : `Email ${selectedEmail.step}`}
+                </p>
+              </div>
+
+              {selectedEmail.noLog ? (
+                /* No log found state */
+                <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-3)' }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ margin: '0 auto 12px', display: 'block', opacity: 0.3 }}>
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}>
+                    No log found for this email
+                  </p>
+                  <p style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5, margin: 0 }}>
+                    This email may not have been sent, or was sent before logging was enabled.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* To */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0 }}>To</p>
+                    <p style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 13, color: 'var(--text-1)', margin: 0 }}>
+                      {selectedEmail.to_email}
+                    </p>
+                  </div>
+
+                  {/* Subject */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0 }}>Subject</p>
+                    <p style={{
+                      fontFamily: 'inherit', fontSize: 14, color: 'var(--text-1)',
+                      background: 'var(--surface-2)', border: '1px solid var(--border)',
+                      borderRadius: 8, padding: '10px 14px', fontStyle: 'italic', margin: 0,
+                    }}>
+                      "{selectedEmail.subject}"
+                    </p>
+                  </div>
+
+                  {/* Status + Sent At */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0 }}>Status</p>
+                      {(() => {
+                        const cfg = statusConfig[selectedEmail.status] ?? {
+                          label: selectedEmail.status,
+                          bg: 'var(--surface-3)', color: 'var(--text-2)', border: 'var(--border)',
+                        }
+                        return (
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 5,
+                            padding: '3px 10px', borderRadius: 100,
+                            fontSize: 11, fontWeight: 500,
+                            background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`,
+                            alignSelf: 'flex-start',
+                          }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.color, display: 'inline-block', flexShrink: 0 }} />
+                            {selectedEmail.status === 'email_sent' ? 'Sent'
+                              : selectedEmail.status === 'failed' ? 'Failed'
+                              : selectedEmail.status}
+                          </span>
+                        )
+                      })()}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0 }}>Sent at</p>
+                      <p style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 13, color: 'var(--text-1)', margin: 0 }}>
+                        {format(new Date(selectedEmail.sent_at), 'MMM d, yyyy')}<br />
+                        <span style={{ color: 'var(--text-3)' }}>{format(new Date(selectedEmail.sent_at), 'hh:mm a')}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Email ID */}
+                  {selectedEmail.resend_id && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0 }}>
+                        Email ID
+                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 12, color: 'var(--text-3)' }}>
+                          {selectedEmail.resend_id.length > 22
+                            ? selectedEmail.resend_id.slice(0, 22) + '…'
+                            : selectedEmail.resend_id}
+                        </span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedEmail.resend_id)
+                            setCopiedResendId(true)
+                            setTimeout(() => setCopiedResendId(false), 1500)
+                          }}
+                          title="Copy email ID"
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 5,
+                            padding: '4px 10px', fontSize: 11, fontWeight: 500,
+                            background: copiedResendId ? 'var(--green-dim)' : 'var(--surface-2)',
+                            color: copiedResendId ? 'var(--green)' : 'var(--text-2)',
+                            border: `1px solid ${copiedResendId ? 'var(--green-border)' : 'var(--border)'}`,
+                            borderRadius: 6, cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
+                          }}
+                        >
+                          {copiedResendId ? (
+                            <>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"/>
+                              </svg>
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                              </svg>
+                              Copy
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Email preview section — only shown when we have real email content */}
+            {!selectedEmail.noLog && (
+              <div style={{ margin: '0 20px 20px' }}>
+                <p style={{
+                  fontSize: 10, fontWeight: 600, color: 'var(--text-3)',
+                  textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8,
+                }}>
+                  Email Preview
+                </p>
+                {selectedEmail.body_html ? (
+                  <div style={{
+                    border: '1px solid var(--border)',
+                    borderRadius: 10,
+                    overflow: 'hidden',
+                    background: 'white',
+                  }}>
+                    <iframe
+                      srcDoc={selectedEmail.body_html}
+                      style={{ width: '100%', height: 420, border: 'none', display: 'block' }}
+                      title="Email preview"
+                      sandbox="allow-same-origin"
+                    />
+                  </div>
+                ) : (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: 20,
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 10,
+                  }}>
+                    <p style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 500, marginBottom: 4 }}>
+                      Preview not available
+                    </p>
+                    <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0 }}>
+                      This email was sent before body logging was enabled. New emails will show a full preview here.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Detail panel */}
       {selected && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex' }}>
@@ -481,66 +768,117 @@ export default function RecoveriesPage() {
                 </div>
               </div>
 
-              {/* Email history */}
+              {/* Recovery Sequence */}
               <div>
-                <p style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 10 }}>Email history</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {selected.email_step && selected.email_step >= 1 ? (
-                    EMAIL_STEPS.map(({ step, label, day, isRetryOnly }) => {
-                      const done = (selected.email_step ?? 0) >= step
-                      const isFinalFailed    = isRetryOnly && done && selected.status === 'failed'
-                      const isFinalRecovered = isRetryOnly && done && selected.status === 'recovered'
-                      const dotBg = isFinalRecovered ? 'var(--green)'
-                        : isFinalFailed  ? 'var(--red)'
-                        : done && !isRetryOnly ? 'var(--green)'
-                        : done && isRetryOnly  ? 'var(--amber)'
-                        : 'var(--border-mid)'
-                      const rowBg = isFinalRecovered ? 'var(--green-dim)'
-                        : isFinalFailed  ? 'var(--red-dim)'
-                        : done && !isRetryOnly ? 'var(--green-dim)'
-                        : done && isRetryOnly  ? 'var(--amber-dim)'
-                        : 'var(--surface-2)'
-                      const rowBorder = isFinalRecovered ? 'var(--green-border)'
-                        : isFinalFailed  ? 'var(--red-border)'
-                        : done && !isRetryOnly ? 'var(--green-border)'
-                        : done && isRetryOnly  ? 'rgba(245,158,11,0.20)'
-                        : 'var(--border)'
-                      return (
-                        <div
-                          key={step}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 12,
-                            padding: '10px 14px', borderRadius: 8,
-                            background: rowBg,
-                            border: `1px solid ${rowBorder}`,
-                          }}
-                        >
-                          <div style={{
-                            width: 20, height: 20, borderRadius: '50%',
-                            background: dotBg, color: '#fff',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            flexShrink: 0, fontSize: 10, fontWeight: 700,
-                          }}>
-                            {done ? '✓' : step}
-                          </div>
-                          <div>
-                            <p style={{ fontSize: 13, fontWeight: 500, color: done ? 'var(--text-1)' : 'var(--text-2)', margin: '0 0 1px' }}>
-                              {label} — {day}
-                            </p>
-                            <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0 }}>
-                              {!done ? 'Pending'
-                                : isFinalRecovered ? 'Recovered'
-                                : isFinalFailed    ? 'Failed'
-                                : isRetryOnly      ? 'Retried'
-                                : 'Sent'}
-                            </p>
-                          </div>
+                <p style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 10 }}>Recovery Sequence</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {[
+                    { day: 0,  stepNum: 1, dayLabel: 'Day 0',  stripeAction: 'Payment failed — recovery started', emailAction: 'Email 1 sent', hasEmail: true,  hasRetry: false },
+                    { day: 3,  stepNum: 2, dayLabel: 'Day 3',  stripeAction: 'Stripe charge attempted',           emailAction: 'Email 2 sent', hasEmail: true,  hasRetry: true  },
+                    { day: 7,  stepNum: 3, dayLabel: 'Day 7',  stripeAction: 'Stripe charge attempted',           emailAction: 'Email 3 sent', hasEmail: true,  hasRetry: true  },
+                    { day: 14, stepNum: 4, dayLabel: 'Day 14', stripeAction: 'Final Stripe charge attempt',       emailAction: 'No email — silent retry', hasEmail: false, hasRetry: true },
+                  ].map((seqStep) => {
+                    const currentEmailStep = selected.email_step ?? 0
+                    const isComplete = currentEmailStep >= seqStep.stepNum
+                    const isPending  = currentEmailStep < seqStep.stepNum
+                    const emailLog   = emailLogs.find((l) => l.step === seqStep.stepNum)
+
+                    const stripeStatusColor = isComplete ? 'var(--green)' : 'var(--text-3)'
+                    const stripeStatusLabel = isPending ? '—' : 'Done'
+
+                    return (
+                      <div key={seqStep.day} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                        {/* Day badge */}
+                        <div style={{
+                          fontFamily: 'var(--font-jetbrains-mono), monospace',
+                          fontSize: 10, fontWeight: 500,
+                          color: isComplete ? 'var(--accent)' : 'var(--text-3)',
+                          background: isComplete ? 'var(--accent-dim)' : 'var(--surface-3)',
+                          border: `1px solid ${isComplete ? 'var(--accent-border)' : 'var(--border)'}`,
+                          borderRadius: 5, padding: '3px 7px',
+                          whiteSpace: 'nowrap', flexShrink: 0, marginTop: 2,
+                          transition: 'all 0.15s',
+                        }}>
+                          {seqStep.dayLabel}
                         </div>
-                      )
-                    })
-                  ) : (
-                    <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>No emails sent yet.</p>
-                  )}
+
+                        {/* Action rows */}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {/* Stripe row */}
+                          <div style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            padding: '6px 10px', borderRadius: 7,
+                            background: 'var(--surface-2)', border: '1px solid var(--border)',
+                          }}>
+                            <div style={{
+                              width: 20, height: 20, borderRadius: 5, flexShrink: 0,
+                              background: 'rgba(99,91,255,0.12)', color: '#635BFF',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="1" y="4" width="22" height="16" rx="2"/>
+                                <line x1="1" y1="10" x2="23" y2="10"/>
+                              </svg>
+                            </div>
+                            <span style={{ flex: 1, fontSize: 12, color: 'var(--text-2)' }}>{seqStep.stripeAction}</span>
+                            <span style={{ fontSize: 11, color: stripeStatusColor, flexShrink: 0 }}>{stripeStatusLabel}</span>
+                          </div>
+
+                          {/* Email row — only for steps with an email */}
+                          {seqStep.hasEmail && (
+                            <div
+                              onClick={() => {
+                                if (!isComplete || emailLogsLoading) return
+                                setSelectedEmail(emailLog ?? {
+                                  id: '', recovery_id: selected.id, user_id: '', to_email: '',
+                                  subject: '', step: seqStep.stepNum, resend_id: '', status: '', sent_at: '', noLog: true,
+                                })
+                              }}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 8,
+                                padding: '6px 10px', borderRadius: 7,
+                                background: 'var(--surface-2)', border: '1px solid var(--border)',
+                                cursor: isComplete && !emailLogsLoading ? 'pointer' : 'default',
+                                transition: 'all 0.15s',
+                              }}
+                              onMouseEnter={(e) => {
+                                if (isComplete && !emailLogsLoading) {
+                                  e.currentTarget.style.borderColor = 'var(--accent-border)'
+                                  e.currentTarget.style.background = 'var(--accent-dim)'
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--border)'
+                                e.currentTarget.style.background = 'var(--surface-2)'
+                              }}
+                            >
+                              <div style={{
+                                width: 20, height: 20, borderRadius: 5, flexShrink: 0,
+                                background: isComplete ? 'var(--accent-dim)' : 'var(--surface-3)',
+                                color: isComplete ? 'var(--accent)' : 'var(--text-3)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                  <polyline points="22,6 12,13 2,6"/>
+                                </svg>
+                              </div>
+                              <span style={{ flex: 1, fontSize: 12, color: isPending ? 'var(--text-3)' : 'var(--text-2)' }}>
+                                {seqStep.emailAction}
+                              </span>
+                              {emailLogsLoading && isComplete ? (
+                                <span style={{ fontSize: 11, color: 'var(--text-3)', flexShrink: 0, opacity: 0.5 }}>…</span>
+                              ) : isComplete ? (
+                                <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 500, flexShrink: 0 }}>View →</span>
+                              ) : (
+                                <span style={{ fontSize: 11, color: 'var(--text-3)', flexShrink: 0 }}>—</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 

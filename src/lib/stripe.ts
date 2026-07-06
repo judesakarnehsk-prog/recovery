@@ -61,20 +61,51 @@ export async function retryPaymentIntent(
   return paymentIntent
 }
 
-export async function createCheckoutSession(
-  priceId: string,
-  customerId: string,
-  customerEmail: string,
+export async function createCheckoutSession({
+  priceId,
+  customerId,
+  customerEmail,
+  userId,
+  trialEndsAt,
+}: {
+  priceId: string
+  customerId?: string
+  customerEmail?: string
   userId?: string
-) {
+  trialEndsAt?: string
+}) {
   const s = getStripe()
+
+  // Compute remaining trial from the user's existing trial_ends_at so the
+  // Stripe subscription ends on the same day as the Supabase trial clock.
+  // Fallback to 14 days only when no trial_ends_at exists (should not happen
+  // in normal flow since the DB trigger sets it on signup).
+  let trialData: { trial_end: number } | { trial_period_days: number }
+
+  if (trialEndsAt) {
+    const trialEndDate = new Date(trialEndsAt)
+    const remainingMs = trialEndDate.getTime() - Date.now()
+    const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24))
+
+    if (remainingDays > 0) {
+      // Pass exact Unix timestamp — Stripe uses this end date verbatim
+      trialData = { trial_end: Math.floor(trialEndDate.getTime() / 1000) }
+    } else {
+      // Trial already expired — subscribe without a trial period
+      trialData = { trial_period_days: 0 }
+    }
+  } else {
+    // No trial_ends_at on record — give the full 14-day default
+    trialData = { trial_period_days: 14 }
+  }
+
   const session = await s.checkout.sessions.create({
     customer: customerId || undefined,
     customer_email: customerId ? undefined : customerEmail,
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      trial_period_days: 14,
+      ...trialData,
       metadata: userId ? { userId } : undefined,
     },
     metadata: userId ? { userId } : undefined,

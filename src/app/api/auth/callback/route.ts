@@ -4,6 +4,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
+// Handles both email confirmation links and Google OAuth redirects.
+// Supabase sends ?code= for both flows; exchangeCodeForSession works for both.
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')

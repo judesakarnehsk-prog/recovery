@@ -68,4 +68,6 @@ export interface DunningEmailParams {
   logoUrl?: string
   dunningTone?: string
   subjectPrefix?: string
+  businessCategory?: string
+  companyUrl?: string
 }

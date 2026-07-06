@@ -33,19 +33,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid price ID' }, { status: 400 })
     }
 
-    // Look up existing Stripe customer ID
+    // Look up existing Stripe customer ID and trial end date
     const { data: userData } = await supabase
       .from('users')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, trial_ends_at')
       .eq('id', user.id)
       .single()
 
-    const session = await createCheckoutSession(
+    const session = await createCheckoutSession({
       priceId,
-      userData?.stripe_customer_id || '',
-      user.email || '',
-      user.id
-    )
+      customerId: userData?.stripe_customer_id || undefined,
+      customerEmail: user.email || '',
+      userId: user.id,
+      trialEndsAt: userData?.trial_ends_at ?? undefined,
+    })
 
     return NextResponse.json({ url: session.url })
   } catch (err) {
