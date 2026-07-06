@@ -6,6 +6,7 @@ import { ArrowRight, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { trackEvent } from '@/lib/analytics'
 import { HeroParticles } from '@/components/marketing/HeroParticles'
+import { RevenueScannerWidget } from '@/app/(marketing)/_components/RevenueScanner'
 
 const activityFeed = [
   { type: 'check', bg: 'bg-green-50', text: 'Payment recovered', amount: '$149', cardClass: 'hero-card-1', checkDelay: '1000ms' },
@@ -84,11 +85,21 @@ export function Hero() {
               </Link>
             </motion.div>
 
+            {/* Revenue Leak Scanner widget — results render below hero */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="mb-6"
+            >
+              <RevenueScannerWidget />
+            </motion.div>
+
             {/* Trust bar */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.55 }}
+              transition={{ duration: 0.5, delay: 0.7 }}
               className="flex flex-wrap items-center gap-y-1"
             >
               {trustItems.map((item, i) => (

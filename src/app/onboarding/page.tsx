@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ChevronDown, ArrowRight, Zap, Mail, BarChart2, Lock, Upload } from 'lucide-react'
@@ -12,12 +12,12 @@ import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { trackEvent } from '@/lib/analytics'
 
-type Step = 1 | 2 | 3 | 4
+type Step = 1 | 2 | 3 | 4 | 5
 
 function ProgressBar({ step }: { step: Step }) {
   return (
     <div className="flex items-center gap-2 mb-10">
-      {([1, 2, 3, 4] as Step[]).map((s, i) => (
+      {([1, 2, 3, 4, 5] as Step[]).map((s, i) => (
         <div key={s} className="flex items-center gap-2 flex-1">
           <div
             className={cn(
@@ -31,7 +31,7 @@ function ProgressBar({ step }: { step: Step }) {
           >
             {step > s ? <Check className="w-3.5 h-3.5" /> : s}
           </div>
-          {i < 3 && (
+          {i < 4 && (
             <div className={cn('h-px flex-1 transition-colors duration-300', step > s ? 'bg-accent' : 'bg-border')} />
           )}
         </div>
@@ -40,11 +40,152 @@ function ProgressBar({ step }: { step: Step }) {
   )
 }
 
-// ─── Step 1: Welcome ──────────────────────────────────────────────────────────
-function StepWelcome({ onNext }: { onNext: () => void }) {
+// ─── Step 1: Business details ─────────────────────────────────────────────────
+function StepBusinessDetails({
+  onNext,
+  userId,
+  initialName,
+  prefillUrl,
+  fromScanner,
+}: {
+  onNext: () => void
+  userId: string
+  initialName: string
+  prefillUrl?: string
+  fromScanner?: boolean
+}) {
+  const [businessName, setBusinessName] = useState(initialName)
+  const [companyUrl, setCompanyUrl] = useState(prefillUrl ?? '')
+  const [businessCategory, setBusinessCategory] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    // Pre-fill any data already saved (e.g. from email signup form)
+    const supabase = createClient()
+    supabase.from('users')
+      .select('company_name, company_url, business_category')
+      .eq('id', userId)
+      .single()
+      .then(({ data }) => {
+        if (data?.company_name) setBusinessName(data.company_name)
+        // Only overwrite URL if not already prefilled from ?url= param
+        if (data?.company_url && !prefillUrl) setCompanyUrl(data.company_url)
+        if (data?.business_category) setBusinessCategory(data.business_category)
+      })
+  }, [userId, prefillUrl])
+
+  const inputCls = 'w-full border border-border rounded-lg px-3.5 py-2.5 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-accent/30'
+
+  const handleSave = async () => {
+    if (!businessName.trim()) return
+    setSaving(true)
+    const supabase = createClient()
+    await supabase.from('users').update({
+      company_name: businessName.trim(),
+      company_url: companyUrl.trim() || null,
+      business_category: businessCategory || null,
+    }).eq('id', userId)
+    setSaving(false)
+    onNext()
+  }
+
   return (
     <motion.div
       key="step1"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -16 }}
+      transition={{ duration: 0.3 }}
+    >
+      {fromScanner && (
+        <div className="scanner-continuity-banner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+          <p>Your recovery analysis is ready — complete setup to see your full strategy</p>
+        </div>
+      )}
+
+      <h2 className="font-display text-3xl text-ink mb-2">Let&apos;s set up your recovery engine</h2>
+      <p className="text-muted mb-8">Takes 30 seconds. Helps us personalize everything.</p>
+
+      <div className="space-y-5">
+        {/* Business name */}
+        <div>
+          <label className="text-sm font-medium text-ink block mb-1.5">Business name</label>
+          <input
+            type="text"
+            value={businessName}
+            onChange={(e) => setBusinessName(e.target.value)}
+            placeholder="Acme Inc."
+            autoComplete="organization"
+            className={inputCls}
+          />
+        </div>
+
+        {/* Website URL */}
+        <div>
+          <label className="text-sm font-medium text-ink block mb-1.5">Website URL</label>
+          <input
+            type="url"
+            value={companyUrl}
+            onChange={(e) => setCompanyUrl(e.target.value)}
+            placeholder="https://yourwebsite.com"
+            autoComplete="url"
+            className={inputCls}
+          />
+          <p className="text-xs text-muted mt-1.5">
+            We&apos;ll analyze your site to personalize your recovery emails
+          </p>
+        </div>
+
+        {/* Business type */}
+        <div>
+          <label className="text-sm font-medium text-ink block mb-1.5">Business type</label>
+          <select
+            value={businessCategory}
+            onChange={(e) => setBusinessCategory(e.target.value)}
+            className={cn(inputCls, 'cursor-pointer appearance-none')}
+          >
+            <option value="">Select your business type…</option>
+            <option value="SaaS / Software">SaaS / Software</option>
+            <option value="E-commerce">E-commerce</option>
+            <option value="Newsletter / Media">Newsletter / Media</option>
+            <option value="Community / Membership">Community / Membership</option>
+            <option value="Agency / Services">Agency / Services</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mt-8">
+        <button
+          onClick={() => { onNext() }}
+          className="text-sm text-muted hover:text-ink transition-colors"
+        >
+          Skip for now
+        </button>
+        <Button
+          variant="accent"
+          size="lg"
+          onClick={handleSave}
+          loading={saving}
+          className="gap-2"
+          disabled={!businessName.trim()}
+        >
+          Continue
+          <ArrowRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── Step 2: Welcome ──────────────────────────────────────────────────────────
+function StepWelcome({ onNext }: { onNext: () => void }) {
+  return (
+    <motion.div
+      key="step2"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
@@ -78,7 +219,7 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
   )
 }
 
-// ─── Step 2: Connect Stripe ───────────────────────────────────────────────────
+// ─── Step 3: Connect Stripe ───────────────────────────────────────────────────
 function StepConnectStripe({ onNext, userId }: { onNext: () => void; userId: string }) {
   const [safetyOpen, setSafetyOpen] = useState(false)
   const [connected, setConnected] = useState(false)
@@ -103,7 +244,7 @@ function StepConnectStripe({ onNext, userId }: { onNext: () => void; userId: str
 
   return (
     <motion.div
-      key="step2"
+      key="step3"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
@@ -136,7 +277,6 @@ function StepConnectStripe({ onNext, userId }: { onNext: () => void; userId: str
         </Link>
       )}
 
-      {/* Safety accordion */}
       <button
         onClick={() => setSafetyOpen(!safetyOpen)}
         className="w-full flex items-center justify-between text-sm text-muted hover:text-ink transition-colors py-2"
@@ -176,7 +316,7 @@ function StepConnectStripe({ onNext, userId }: { onNext: () => void; userId: str
   )
 }
 
-// ─── Step 3: Brand emails ─────────────────────────────────────────────────────
+// ─── Step 4: Brand emails ─────────────────────────────────────────────────────
 function StepBrandEmails({
   onNext,
   userId,
@@ -231,7 +371,6 @@ function StepBrandEmails({
       alert('Upload failed: ' + error.message)
     }
     setUploading(false)
-    // Reset input so same file can be re-selected
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -240,9 +379,7 @@ function StepBrandEmails({
     const supabase = createClient()
     await supabase
       .from('stripe_accounts')
-      .update({
-        config_json: { businessName, brandColor, logoUrl },
-      })
+      .update({ config_json: { businessName, brandColor, logoUrl } })
       .eq('user_id', userId)
     setSaving(false)
     onNext()
@@ -253,7 +390,7 @@ function StepBrandEmails({
 
   return (
     <motion.div
-      key="step3"
+      key="step4"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
@@ -263,7 +400,6 @@ function StepBrandEmails({
       <p className="text-muted mb-8">Your customers will see your brand, not Revorva&apos;s.</p>
 
       <div className="lg:grid lg:grid-cols-2 lg:gap-8">
-        {/* Form */}
         <div className="space-y-5 mb-8 lg:mb-0">
           <div>
             <label className="text-sm font-medium text-ink block mb-1.5">Business name</label>
@@ -304,7 +440,6 @@ function StepBrandEmails({
             )}
           </div>
 
-          {/* Logo upload — properly wired */}
           <div>
             <label className="text-sm font-medium text-ink block mb-1.5">
               Logo <span className="text-muted font-normal">(optional)</span>
@@ -314,7 +449,6 @@ function StepBrandEmails({
             </label>
             {isGrowthPlus ? (
               <div>
-                {/* Hidden file input — triggered by the button below */}
                 <input
                   ref={fileRef}
                   type="file"
@@ -326,20 +460,8 @@ function StepBrandEmails({
                 {logoUrl ? (
                   <div className="flex items-center gap-3 p-3 border border-border rounded-lg bg-white">
                     <Image src={logoUrl} alt="Logo preview" width={160} height={32} className="h-8 w-auto rounded object-contain flex-shrink-0" />
-                    <button
-                      type="button"
-                      onClick={() => fileRef.current?.click()}
-                      className="text-xs text-muted hover:text-ink underline"
-                    >
-                      Replace
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLogoUrl('')}
-                      className="text-xs text-red-500 hover:text-red-700 underline"
-                    >
-                      Remove
-                    </button>
+                    <button type="button" onClick={() => fileRef.current?.click()} className="text-xs text-muted hover:text-ink underline">Replace</button>
+                    <button type="button" onClick={() => setLogoUrl('')} className="text-xs text-red-500 hover:text-red-700 underline">Remove</button>
                   </div>
                 ) : (
                   <button
@@ -361,7 +483,6 @@ function StepBrandEmails({
           </div>
         </div>
 
-        {/* Live preview */}
         <div className="bg-cream rounded-xl p-4">
           <p className="text-xs text-muted font-medium uppercase tracking-wide mb-3">Email preview</p>
           <div className="bg-white rounded-lg shadow-card overflow-hidden text-sm">
@@ -378,25 +499,17 @@ function StepBrandEmails({
               <p className="text-xs text-muted leading-relaxed">
                 Your recent payment of <strong>$79</strong> for {businessName || 'Your Company'} couldn&apos;t be processed.
               </p>
-              <button
-                className="text-xs text-white px-4 py-2 rounded-lg font-semibold"
-                style={{ backgroundColor: previewColor }}
-              >
+              <button className="text-xs text-white px-4 py-2 rounded-lg font-semibold" style={{ backgroundColor: previewColor }}>
                 Update payment method
               </button>
-              <p className="text-xs text-muted/60 pt-1">
-                Sent by {businessName || 'Your Company'} via Revorva
-              </p>
+              <p className="text-xs text-muted/60 pt-1">Sent by {businessName || 'Your Company'} via Revorva</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="flex items-center justify-between mt-8">
-        <button
-          onClick={onNext}
-          className="text-sm text-muted hover:text-ink transition-colors"
-        >
+        <button onClick={onNext} className="text-sm text-muted hover:text-ink transition-colors">
           Skip for now
         </button>
         <Button variant="accent" size="lg" onClick={handleSave} loading={saving} className="gap-2">
@@ -408,11 +521,11 @@ function StepBrandEmails({
   )
 }
 
-// ─── Step 4: All set ──────────────────────────────────────────────────────────
+// ─── Step 5: All set ──────────────────────────────────────────────────────────
 function StepAllSet({ userName, onFinish }: { userName: string; onFinish: () => void }) {
   return (
     <motion.div
-      key="step4"
+      key="step5"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
@@ -437,21 +550,9 @@ function StepAllSet({ userName, onFinish }: { userName: string; onFinish: () => 
 
       <div className="grid sm:grid-cols-3 gap-4 mb-10 text-left">
         {[
-          {
-            icon: Zap,
-            title: 'Failed payment detected',
-            desc: 'Recovery starts automatically',
-          },
-          {
-            icon: Mail,
-            title: 'Customer receives email',
-            desc: 'One-click payment update',
-          },
-          {
-            icon: BarChart2,
-            title: 'Revenue recovered',
-            desc: 'Shown in your dashboard',
-          },
+          { icon: Zap,      title: 'Failed payment detected', desc: 'Recovery starts automatically' },
+          { icon: Mail,     title: 'Customer receives email',  desc: 'One-click payment update' },
+          { icon: BarChart2, title: 'Revenue recovered',       desc: 'Shown in your dashboard' },
         ].map(({ icon: Icon, title, desc }) => (
           <div key={title} className="bg-white border border-border rounded-xl p-4">
             <div className="w-8 h-8 rounded-lg bg-accent-light flex items-center justify-center mb-3">
@@ -463,12 +564,10 @@ function StepAllSet({ userName, onFinish }: { userName: string; onFinish: () => 
         ))}
       </div>
 
-      <div className="flex items-center justify-center">
-        <Button variant="accent" size="lg" onClick={onFinish} className="gap-2 w-full sm:w-auto">
-          Go to dashboard
-          <ArrowRight className="w-4 h-4" />
-        </Button>
-      </div>
+      <Button variant="accent" size="lg" onClick={onFinish} className="gap-2 w-full sm:w-auto">
+        Go to dashboard
+        <ArrowRight className="w-4 h-4" />
+      </Button>
     </motion.div>
   )
 }
@@ -476,6 +575,10 @@ function StepAllSet({ userName, onFinish }: { userName: string; onFinish: () => 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function OnboardingPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const scannerUrl = searchParams.get('url') ?? undefined
+  const scannerRef = searchParams.get('ref') ?? ''
+  const fromScanner = scannerRef === 'scanner' || scannerRef === 'scanner_tone'
   const [step, setStep] = useState<Step>(1)
   const [userId, setUserId] = useState('')
   const [userName, setUserName] = useState('')
@@ -485,33 +588,29 @@ export default function OnboardingPage() {
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) {
-        router.replace('/login')
-        return
-      }
+      if (!user) { router.replace('/login'); return }
 
       setUserId(user.id)
 
-      // Fetch user profile
       const { data: profile } = await supabase
         .from('users')
-        .select('onboarding_step, plan, full_name, company_name')
+        .select('onboarding_step, onboarding_complete, plan, full_name, company_name')
         .eq('id', user.id)
         .single()
 
       if (profile) {
-        if (profile.onboarding_step === 'completed') {
+        // Already finished — go straight to dashboard
+        if (profile.onboarding_complete === true || profile.onboarding_step === 'completed') {
           router.replace('/dashboard')
           return
         }
         setUserPlan(profile.plan || 'starter')
         setUserName(profile.full_name || profile.company_name || '')
-        // Restore step from DB
+        // Restore step from DB (old step values were 1-4, now 1-5 with new step 1 prepended)
         const savedStep = parseInt(profile.onboarding_step || '1')
-        if (!isNaN(savedStep) && savedStep >= 1 && savedStep <= 4) {
+        if (!isNaN(savedStep) && savedStep >= 1 && savedStep <= 5) {
           setStep(savedStep as Step)
         }
-        // First time reaching onboarding = email just verified
         if (!profile.onboarding_step || profile.onboarding_step === '1') {
           trackEvent('email_verified')
         }
@@ -530,15 +629,18 @@ export default function OnboardingPage() {
   }
 
   const handleNext = async () => {
-    const next = (step + 1) as Step
+    const next = Math.min(step + 1, 5) as Step
     await saveStep(next)
-    // Advancing past step 2 means Stripe was just connected
-    if (step === 2) trackEvent('stripe_connected')
+    if (step === 3) trackEvent('stripe_connected')
     setStep(next)
   }
 
   const handleFinish = async () => {
-    await saveStep('completed')
+    const supabase = createClient()
+    await supabase
+      .from('users')
+      .update({ onboarding_step: 'completed', onboarding_complete: true })
+      .eq('id', userId)
     trackEvent('onboarding_complete')
     router.push('/dashboard')
   }
@@ -554,25 +656,19 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-2xl">
-        {/* Logo */}
         <div className="text-center mb-10">
           <Logo />
         </div>
 
-        {/* Progress */}
         <ProgressBar step={step} />
+        <p className="text-xs text-muted text-right mb-6">Step {step} of 5</p>
 
-        {/* Step label */}
-        <p className="text-xs text-muted text-right mb-6">Step {step} of 4</p>
-
-        {/* Steps */}
         <AnimatePresence mode="wait">
-          {step === 1 && <StepWelcome key="s1" onNext={handleNext} />}
-          {step === 2 && <StepConnectStripe key="s2" onNext={handleNext} userId={userId} />}
-          {step === 3 && (
-            <StepBrandEmails key="s3" onNext={handleNext} userId={userId} plan={userPlan} />
-          )}
-          {step === 4 && <StepAllSet key="s4" userName={userName} onFinish={handleFinish} />}
+          {step === 1 && <StepBusinessDetails key="s1" onNext={handleNext} userId={userId} initialName={userName} prefillUrl={scannerUrl} fromScanner={fromScanner} />}
+          {step === 2 && <StepWelcome key="s2" onNext={handleNext} />}
+          {step === 3 && <StepConnectStripe key="s3" onNext={handleNext} userId={userId} />}
+          {step === 4 && <StepBrandEmails key="s4" onNext={handleNext} userId={userId} plan={userPlan} />}
+          {step === 5 && <StepAllSet key="s5" userName={userName} onFinish={handleFinish} />}
         </AnimatePresence>
       </div>
     </div>

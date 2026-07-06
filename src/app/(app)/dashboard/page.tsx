@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
@@ -73,6 +73,8 @@ export default function DashboardPage() {
   const [missingBusinessName, setMissingBusinessName] = useState(false)
   const [businessNameInput, setBusinessNameInput] = useState('')
   const [savingBusinessName, setSavingBusinessName] = useState(false)
+  const [analyzerTrigger, setAnalyzerTrigger] = useState(0)
+  const [hasCompanyUrl, setHasCompanyUrl] = useState(false)
 
   const setupStatus = useSetupStatus()
 
@@ -89,7 +91,7 @@ export default function DashboardPage() {
     if (!user) return
 
     const [profileRes, statsRes, recoveriesRes, stripeRes] = await Promise.all([
-      supabase.from('users').select('full_name, company_name, onboarding_step, created_at, plan, trial_ends_at').eq('id', user.id).single(),
+      supabase.from('users').select('full_name, company_name, company_url, onboarding_step, created_at, plan, trial_ends_at').eq('id', user.id).single(),
       supabase.from('user_recovery_stats').select('*').eq('user_id', user.id).single(),
       supabase.from('recoveries').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(100),
       supabase.from('stripe_accounts').select('id, stripe_account_id, config_json').eq('user_id', user.id).single(),
@@ -111,6 +113,7 @@ export default function DashboardPage() {
     const stripeAccountIdPresent = !!stripeRes.data?.stripe_account_id
     setHasStripeRow(rowExists)
     setStripeConnected(rowExists && stripeAccountIdPresent)
+    setHasCompanyUrl(!!(profile as any)?.company_url)
     setRecoveryPaused(stripeRes.data?.config_json?.recoveryPaused === true)
     setPausedBy(stripeRes.data?.config_json?.pausedBy ?? null)
     const dismissed = typeof window !== 'undefined' ? localStorage.getItem('setup_checklist_dismissed') === 'true' : false
@@ -234,6 +237,28 @@ export default function DashboardPage() {
           <p style={{ fontSize: 13, color: 'var(--text-2, #555)', margin: 0 }}>Here&apos;s your recovery overview.</p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Analyzer icon button */}
+          {hasCompanyUrl && (
+            <button
+              onClick={() => setAnalyzerTrigger(n => n + 1)}
+              title="View recovery analysis"
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--border-mid, #282828)',
+                borderRadius: 8, padding: '7px 10px',
+                color: 'var(--text-3, #555)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent-border)'; e.currentTarget.style.color = 'var(--accent)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-mid, #282828)'; e.currentTarget.style.color = 'var(--text-3, #555)' }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </button>
+          )}
+
           {/* Period selector */}
           <div className="flex items-center" style={{
             background: 'var(--surface, #111)',
@@ -378,7 +403,7 @@ export default function DashboardPage() {
       )}
 
       {/* Business analysis CTA */}
-      <BusinessAnalysis />
+      <BusinessAnalysis forceOpen={analyzerTrigger > 0} key={analyzerTrigger} />
 
       {/* Setup checklist (new version) */}
       <SetupChecklist />
@@ -558,3 +583,5 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+

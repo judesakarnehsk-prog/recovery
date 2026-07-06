@@ -13,11 +13,13 @@ import { Pricing } from '@/components/marketing/Pricing'
 import { IndustryStats } from '@/components/marketing/IndustryStats'
 import { RecentActivity } from '@/components/marketing/RecentActivity'
 import { FinalCTA } from '@/components/marketing/FinalCTA'
+import { ScannerPageWrapper } from './_components/ScannerPageWrapper'
 
 export default function HomePage() {
   return (
     <>
       <Hero />
+      <ScannerPageWrapper />
       <Problem />
       <MrrCalculator />
       <HowItWorks />

@@ -66,6 +66,22 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL('/verify-email', request.url))
   }
 
+  // Onboarding gate — redirect new users to /onboarding before they reach the app.
+  // Skipped for the /onboarding route itself and non-app routes (billing, admin).
+  const isOnboardingRoute = request.nextUrl.pathname.startsWith('/onboarding')
+  const onboardingGatedRoutes = ['/dashboard', '/recoveries', '/connect', '/settings', '/integrations', '/profile']
+  const isOnboardingGated = onboardingGatedRoutes.some(r => request.nextUrl.pathname.startsWith(r))
+  if (isOnboardingGated && user && !isOnboardingRoute) {
+    const { data: profile } = await supabase
+      .from('users')
+      .select('onboarding_complete')
+      .eq('id', user.id)
+      .single()
+    if (profile && profile.onboarding_complete === false) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
+  }
+
   // Admin-only routes
   if (request.nextUrl.pathname.startsWith('/admin') && user) {
     const { data: profile } = await supabase.from('users').select('email').eq('id', user.id).single()

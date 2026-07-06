@@ -4,20 +4,12 @@ import { useEffect, useRef } from 'react'
 
 export function ScrollFX() {
   const glowRef = useRef<HTMLDivElement>(null)
-  const barRef = useRef<HTMLDivElement>(null)
   const bgTickRef = useRef(false)
   const mouseRef = useRef({ x: 0, y: 0 })
   const glowPosRef = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
-    // ── SCROLL PROGRESS BAR ──
     function onScroll() {
-      if (barRef.current) {
-        const total = document.documentElement.scrollHeight - window.innerHeight
-        const pct = total > 0 ? (window.scrollY / total) * 100 : 0
-        barRef.current.style.width = Math.min(pct, 100) + '%'
-      }
-
       // ── SCROLL-REACTIVE BACKGROUND ──
       if (!bgTickRef.current) {
         bgTickRef.current = true
@@ -91,17 +83,6 @@ export function ScrollFX() {
 
   return (
     <>
-      {/* Scroll progress bar */}
-      <div
-        ref={barRef}
-        style={{
-          position: 'fixed', top: 0, left: 0,
-          height: 2, width: '0%',
-          background: 'linear-gradient(90deg, #F5780A 0%, #FFB347 100%)',
-          zIndex: 9999, pointerEvents: 'none',
-          transition: 'width 0.08s linear',
-        }}
-      />
       {/* Cursor glow */}
       <div
         ref={glowRef}

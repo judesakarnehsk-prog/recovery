@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -23,7 +23,7 @@ interface UserContext {
   has_seen_analysis: boolean
 }
 
-export function BusinessAnalysis() {
+export function BusinessAnalysis({ forceOpen = false }: { forceOpen?: boolean }) {
   const [user, setUser] = useState<UserContext | null>(null)
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -56,32 +56,51 @@ export function BusinessAnalysis() {
     return () => window.removeEventListener('keydown', handleEsc)
   }, [open])
 
-  const handleOpen = async () => {
-    if (!user) return
-    setOpen(true)
+  const fetchAnalysis = useCallback(async (u: UserContext) => {
     setLoading(true)
+    setAnalysis(null)
     try {
       const res = await fetch('/api/analyze-business', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          companyUrl: user.company_url,
-          businessName: user.company_name,
-          businessCategory: user.business_category,
+          companyUrl: u.company_url,
+          businessName: u.company_name,
+          businessCategory: u.business_category,
         }),
       })
       const data = await res.json()
       if (data.success) setAnalysis(data.analysis)
     } finally {
       setLoading(false)
-      const supabase = createClient()
-      await supabase.from('users').update({ has_seen_analysis: true }).eq('id', user.id)
     }
-  }
+  }, [])
+
+  const handleOpen = useCallback(async (u?: UserContext) => {
+    const target = u ?? user
+    if (!target) return
+    setOpen(true)
+    await fetchAnalysis(target)
+  }, [user, fetchAnalysis])
+
+  useEffect(() => {
+    if (forceOpen && user && !open) {
+      handleOpen(user)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceOpen])
 
   const handleClose = () => {
     setOpen(false)
+  }
+
+  const handleDismiss = async () => {
+    setOpen(false)
     setDismissed(true)
+    if (user) {
+      const supabase = createClient()
+      await supabase.from('users').update({ has_seen_analysis: true }).eq('id', user.id)
+    }
   }
 
   const applyTone = async () => {
@@ -131,12 +150,12 @@ export function BusinessAnalysis() {
               See your personalized recovery strategy
             </p>
             <p style={{ fontSize: 13, color: 'var(--text-2)', margin: 0 }}>
-              We analyzed {businessName} — here&apos;s exactly how Revorva will recover your failed payments.
+              We analyzed {businessName} &mdash; here&apos;s exactly how Revorva will recover your failed payments.
             </p>
           </div>
         </div>
         <button
-          onClick={handleOpen}
+          onClick={() => handleOpen()}
           style={{
             background: 'var(--accent)',
             color: 'white',
@@ -153,7 +172,7 @@ export function BusinessAnalysis() {
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
         >
-          View analysis →
+          View analysis &rarr;
         </button>
       </div>
 
@@ -186,7 +205,6 @@ export function BusinessAnalysis() {
             }}
           >
             {loading ? (
-              /* Loading state */
               <div style={{ padding: '60px 40px', textAlign: 'center' }}>
                 <div style={{
                   width: 32, height: 32,
@@ -197,16 +215,14 @@ export function BusinessAnalysis() {
                   margin: '0 auto 16px',
                 }} />
                 <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-1)', marginBottom: 6 }}>
-                  Analyzing {businessName}…
+                  Analyzing {businessName}&hellip;
                 </p>
                 <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>
                   Reading your website and building your recovery strategy
                 </p>
               </div>
             ) : analysis ? (
-              /* Analysis result */
               <>
-                {/* Header */}
                 <div style={{ padding: '28px 28px 20px', borderBottom: '1px solid var(--border)' }}>
                   <div style={{
                     display: 'inline-block',
@@ -235,7 +251,6 @@ export function BusinessAnalysis() {
                   </p>
                 </div>
 
-                {/* Metrics row */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(3, 1fr)',
@@ -266,7 +281,6 @@ export function BusinessAnalysis() {
                   ))}
                 </div>
 
-                {/* Recovery approach */}
                 <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border)' }}>
                   <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.07em', marginBottom: 10 }}>
                     How we&apos;ll recover your payments
@@ -276,7 +290,6 @@ export function BusinessAnalysis() {
                   </p>
                 </div>
 
-                {/* Key insight */}
                 <div style={{
                   display: 'flex', alignItems: 'flex-start', gap: 12,
                   padding: '16px 28px',
@@ -294,7 +307,6 @@ export function BusinessAnalysis() {
                   </p>
                 </div>
 
-                {/* Tone recommendation */}
                 <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border)' }}>
                   <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.07em', marginBottom: 10 }}>
                     Recommended email tone
@@ -328,11 +340,10 @@ export function BusinessAnalysis() {
                     onMouseEnter={(e) => { if (!toneApplied) { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' } }}
                     onMouseLeave={(e) => { if (!toneApplied) { e.currentTarget.style.borderColor = 'var(--border-mid)'; e.currentTarget.style.color = 'var(--text-2)' } }}
                   >
-                    {toneApplied ? '✓ Tone applied' : 'Apply this tone to my emails'}
+                    {toneApplied ? '&#x2713; Tone applied' : 'Apply this tone to my emails'}
                   </button>
                 </div>
 
-                {/* Sample email preview */}
                 <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border)' }}>
                   <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.07em', marginBottom: 10 }}>
                     Sample recovery email
@@ -357,20 +368,30 @@ export function BusinessAnalysis() {
                       {analysis.sampleOpener}
                       <br /><br />
                       <span style={{ color: 'var(--text-3)', fontSize: 13 }}>
-                        [Revorva continues with personalized recovery content and payment update link…]
+                        [Revorva continues with personalized recovery content and payment update link&hellip;]
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Footer CTA */}
                 <div style={{
                   padding: '20px 28px',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
                 }}>
-                  <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>
-                    Recovery is already active — Revorva will use this strategy automatically.
-                  </p>
+                  <button
+                    onClick={handleDismiss}
+                    style={{
+                      background: 'transparent', color: 'var(--text-3)',
+                      border: '1px solid var(--border)', borderRadius: 8,
+                      padding: '10px 16px', fontSize: 13, fontWeight: 500,
+                      cursor: 'pointer', whiteSpace: 'nowrap',
+                      transition: 'all 0.15s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-2)'; e.currentTarget.style.borderColor = 'var(--border-mid)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                  >
+                    Don&apos;t show this again
+                  </button>
                   <button
                     onClick={handleClose}
                     style={{
@@ -383,12 +404,11 @@ export function BusinessAnalysis() {
                     onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
                     onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
                   >
-                    Got it, let&apos;s go →
+                    Got it, let&apos;s go &rarr;
                   </button>
                 </div>
               </>
             ) : (
-              /* Error state */
               <div style={{ padding: '60px 40px', textAlign: 'center' }}>
                 <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-1)', marginBottom: 8 }}>
                   Analysis unavailable
