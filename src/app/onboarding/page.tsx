@@ -1,6 +1,6 @@
-'use client'
+﻿'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -573,7 +573,7 @@ function StepAllSet({ userName, onFinish }: { userName: string; onFinish: () => 
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
-export default function OnboardingPage() {
+function OnboardingContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const scannerUrl = searchParams.get('url') ?? undefined
@@ -672,5 +672,29 @@ export default function OnboardingPage() {
         </AnimatePresence>
       </div>
     </div>
+  )
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        minHeight: '100vh',
+        background: '#080808',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <div style={{
+          width: 24, height: 24,
+          border: '2px solid #333',
+          borderTopColor: '#C94A1F',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+        }} />
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
   )
 }
