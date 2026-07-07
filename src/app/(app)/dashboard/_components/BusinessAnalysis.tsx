@@ -42,7 +42,7 @@ export function BusinessAnalysis({ forceOpen = false }: { forceOpen?: boolean })
       .eq('id', authUser.id)
       .single()
 
-    if (data?.company_url && !data?.has_seen_analysis) {
+    if (data?.company_url) {
       setUser(data as UserContext)
     }
   }, [])
@@ -114,14 +114,15 @@ export function BusinessAnalysis({ forceOpen = false }: { forceOpen?: boolean })
     setTimeout(() => setToneApplied(false), 2000)
   }
 
-  if (!user || dismissed) return null
+  if (!user) return null
+  const showCtaCard = !dismissed && !user.has_seen_analysis
 
   const businessName = user.company_name || 'your business'
 
   return (
     <>
       {/* CTA card on dashboard */}
-      <div style={{
+      {showCtaCard && <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -174,7 +175,7 @@ export function BusinessAnalysis({ forceOpen = false }: { forceOpen?: boolean })
         >
           View analysis &rarr;
         </button>
-      </div>
+      </div>}
 
       {/* Modal */}
       {open && (
@@ -440,3 +441,4 @@ export function BusinessAnalysis({ forceOpen = false }: { forceOpen?: boolean })
     </>
   )
 }
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -197,7 +197,7 @@ function BillingContent() {
   if (trialEndsAt) {
     const endsAt = new Date(trialEndsAt)
     trialDaysLeft = Math.ceil((endsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    trialDateStr = endsAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    trialDateStr = endsAt.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' })
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -676,3 +676,4 @@ export default function BillingPage() {
     </Suspense>
   )
 }
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -55,6 +55,7 @@ const inputStyle: React.CSSProperties = {
 
 export default function EmailBrandingPage() {
   const [plan, setPlan] = useState('starter')
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null)
   const [businessName, setBusinessName] = useState('')
   const [brandColor, setBrandColor] = useState('#c8401a')
   const [dunningTone, setDunningTone] = useState('professional')
@@ -66,7 +67,7 @@ export default function EmailBrandingPage() {
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const isGrowthPlus = plan === 'growth' || plan === 'scale'
+  const isGrowthPlus = plan === 'growth' || plan === 'scale' || (plan === 'trial' && !!trialEndsAt && new Date(trialEndsAt) > new Date())
   const debouncedColor = useDebounce(brandColor, 300)
   const debouncedName = useDebounce(businessName, 300)
 
@@ -75,10 +76,11 @@ export default function EmailBrandingPage() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       const [profileRes, stripeRes] = await Promise.all([
-        supabase.from('users').select('plan').eq('id', user.id).single(),
+        supabase.from('users').select('plan, trial_ends_at').eq('id', user.id).single(),
         supabase.from('stripe_accounts').select('config_json').eq('user_id', user.id).single(),
       ])
       if (profileRes.data?.plan) setPlan(profileRes.data.plan)
+      if (profileRes.data?.trial_ends_at) setTrialEndsAt(profileRes.data.trial_ends_at)
       const cfg = stripeRes.data?.config_json || {}
       if (cfg.businessName !== undefined) setBusinessName(cfg.businessName)
       if (cfg.brandColor !== undefined) setBrandColor(cfg.brandColor)
@@ -578,3 +580,4 @@ export default function EmailBrandingPage() {
     </div>
   )
 }
+

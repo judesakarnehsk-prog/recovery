@@ -321,10 +321,12 @@ function StepBrandEmails({
   onNext,
   userId,
   plan,
+  trialEndsAt,
 }: {
   onNext: () => void
   userId: string
   plan: string
+  trialEndsAt: string | null
 }) {
   const [businessName, setBusinessName] = useState('')
   const [brandColor, setBrandColor] = useState('#c8401a')
@@ -332,7 +334,7 @@ function StepBrandEmails({
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
-  const isGrowthPlus = plan === 'growth' || plan === 'scale'
+  const isGrowthPlus = plan === 'growth' || plan === 'scale' || (plan === 'trial' && !!trialEndsAt && new Date(trialEndsAt) > new Date())
 
   useEffect(() => {
     const supabase = createClient()
@@ -583,6 +585,7 @@ function OnboardingContent() {
   const [userId, setUserId] = useState('')
   const [userName, setUserName] = useState('')
   const [userPlan, setUserPlan] = useState('starter')
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
@@ -594,7 +597,7 @@ function OnboardingContent() {
 
       const { data: profile } = await supabase
         .from('users')
-        .select('onboarding_step, onboarding_complete, plan, full_name, company_name')
+        .select('onboarding_step, onboarding_complete, plan, trial_ends_at, full_name, company_name')
         .eq('id', user.id)
         .single()
 
@@ -605,6 +608,7 @@ function OnboardingContent() {
           return
         }
         setUserPlan(profile.plan || 'starter')
+        setTrialEndsAt((profile as any).trial_ends_at || null)
         setUserName(profile.full_name || profile.company_name || '')
         // Restore step from DB (old step values were 1-4, now 1-5 with new step 1 prepended)
         const savedStep = parseInt(profile.onboarding_step || '1')
@@ -667,7 +671,7 @@ function OnboardingContent() {
           {step === 1 && <StepBusinessDetails key="s1" onNext={handleNext} userId={userId} initialName={userName} prefillUrl={scannerUrl} fromScanner={fromScanner} />}
           {step === 2 && <StepWelcome key="s2" onNext={handleNext} />}
           {step === 3 && <StepConnectStripe key="s3" onNext={handleNext} userId={userId} />}
-          {step === 4 && <StepBrandEmails key="s4" onNext={handleNext} userId={userId} plan={userPlan} />}
+          {step === 4 && <StepBrandEmails key="s4" onNext={handleNext} userId={userId} plan={userPlan} trialEndsAt={trialEndsAt} />}
           {step === 5 && <StepAllSet key="s5" userName={userName} onFinish={handleFinish} />}
         </AnimatePresence>
       </div>
@@ -698,3 +702,4 @@ export default function OnboardingPage() {
     </Suspense>
   )
 }
+
